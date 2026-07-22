@@ -9,9 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- Подключаем Kinobox -->
-  <script src="https://kinobox.in/kinobox.min.js"></script>
-
   <style>
     :root {
       --bg-primary: #0a0c10;
@@ -28,7 +25,6 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
     body { background-color: var(--bg-primary); color: var(--text-main); overflow-x: hidden; }
 
-    /* HEADER */
     .header {
       position: fixed; top: 0; left: 0; width: 100%; z-index: 1000;
       background: rgba(10,12,16,0.92); backdrop-filter: blur(12px); padding: 15px 4%;
@@ -47,11 +43,9 @@
     .search-form input:focus { border-color: var(--accent); background: rgba(255, 255, 255, 0.12); }
     .search-form i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
 
-    /* CONTAINER */
     .container { padding: 100px 4% 60px; }
     .section-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
 
-    /* GRID */
     .movies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 20px; }
     .movie-card { background: var(--bg-card); border-radius: var(--radius-md); overflow: hidden; cursor: pointer; transition: transform 0.3s; position: relative; }
     .movie-card:hover { transform: translateY(-8px); }
@@ -61,7 +55,7 @@
     .card-title { font-size: 0.95rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
 
-    /* MODAL */
+    /* MODAL & PLAYER */
     .modal {
       position: fixed; inset: 0; background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(15px);
       z-index: 2000; display: flex; align-items: center; justify-content: center;
@@ -70,17 +64,33 @@
     .modal.active { opacity: 1; pointer-events: auto; }
     .modal-container {
       background: var(--bg-secondary); border-radius: var(--radius-lg); width: 100%; max-width: 1000px;
-      overflow: hidden; border: 1px solid var(--border-color); position: relative;
+      max-height: 90vh; overflow-y: auto; border: 1px solid var(--border-color); position: relative;
     }
     .modal-close {
       position: absolute; top: 15px; right: 15px; background: rgba(0, 0, 0, 0.7); border: none;
       color: #fff; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 100; font-size: 1.2rem;
     }
 
-    /* PLAYER AREA */
-    .player-box { position: relative; width: 100%; min-height: 480px; background: #000; display: flex; align-items: center; justify-content: center; }
-    .kinobox_player { width: 100%; height: 100%; min-height: 480px; }
-    .player-box iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+    .player-box { position: relative; width: 100%; min-height: 450px; background: #000; }
+    .kinobox_player { width: 100%; height: 100%; min-height: 450px; }
+
+    /* DEBUG LOGS PANEL */
+    .debug-panel {
+      background: #080a0d; border-top: 1px solid var(--border-color); padding: 15px; font-family: monospace; font-size: 0.8rem;
+    }
+    .debug-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .debug-title { color: #f59e0b; font-weight: bold; }
+    .copy-btn {
+      background: var(--bg-card); border: 1px solid var(--border-color); color: #fff;
+      padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;
+    }
+    .copy-btn:hover { background: var(--accent); }
+    .debug-logs {
+      background: #000; color: #10b981; padding: 10px; border-radius: 6px;
+      max-height: 120px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;
+    }
+    .log-err { color: #ef4444; }
+    .log-warn { color: #f59e0b; }
 
     .modal-details { padding: 20px; }
     .modal-title-text { font-size: 1.6rem; font-weight: 800; margin-bottom: 5px; }
@@ -89,7 +99,7 @@
       .header { flex-direction: column; align-items: stretch; }
       .container { padding-top: 140px; }
       .movies-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
-      .player-box, .kinobox_player { min-height: 260px; }
+      .player-box, .kinobox_player { min-height: 250px; }
     }
   </style>
 </head>
@@ -120,12 +130,46 @@
         <div class="kinobox_player" id="kinoboxPlayer"></div>
       </div>
 
+      <!-- ЛОГИ ОТЛАДКИ -->
+      <div class="debug-panel">
+        <div class="debug-header">
+          <span class="debug-title"><i class="fa-solid fa-terminal"></i> Лог загрузки плеера:</span>
+          <button class="copy-btn" onclick="copyLogs()"><i class="fa-solid fa-copy"></i> Скопировать логи</button>
+        </div>
+        <div class="debug-logs" id="debugLogs">Инициализация системы...</div>
+      </div>
+
       <div class="modal-details">
         <h2 class="modal-title-text" id="modalTitle">Название фильма</h2>
         <p style="color: var(--text-muted); font-size: 0.9rem;" id="modalSub">Полная версия</p>
       </div>
     </div>
   </div>
+
+  <!-- Подгружаем скрипт с отслеживанием ошибок -->
+  <script>
+    function log(msg, type = 'info') {
+      const logsEl = document.getElementById('debugLogs');
+      const time = new Date().toLocaleTimeString();
+      let cls = '';
+      if (type === 'error') cls = 'class="log-err"';
+      if (type === 'warn') cls = 'class="log-warn"';
+      
+      logsEl.innerHTML += `<div ${cls}>[${time}] ${msg}</div>`;
+      logsEl.scrollTop = logsEl.scrollHeight;
+    }
+
+    function copyLogs() {
+      const logsText = document.getElementById('debugLogs').innerText;
+      navigator.clipboard.writeText(logsText);
+      alert('Логи скопированы в буфер обмена!');
+    }
+  </script>
+
+  <script src="https://kinobox.in/kinobox.min.js" 
+          onload="log('Скрипт Kinobox успешно загружен с CDN')" 
+          onerror="log('ОШИБКА: Загрузка Kinobox CDN заблокирована провайдером или AdBlock', 'error')">
+  </script>
 
   <script>
     const API_KEY = '8c8e1a50-6322-4135-8875-5d40a5420d86';
@@ -141,6 +185,7 @@
     const kinoboxPlayer = document.getElementById('kinoboxPlayer');
 
     document.addEventListener('DOMContentLoaded', () => {
+      log('Приложение запущено. Хост: ' + window.location.hostname);
       loadPopularMovies();
 
       searchForm.onsubmit = (e) => {
@@ -154,13 +199,16 @@
     });
 
     async function loadPopularMovies() {
+      log('Загрузка популярных фильмов с Kinopoisk API...');
       try {
         const res = await fetch(API_URL_POPULAR, {
           headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' }
         });
         const data = await res.json();
+        log('Получено фильмов: ' + (data.items ? data.items.length : 0));
         renderMovies(data.items || []);
       } catch (err) {
+        log('Ошибка загрузки каталога Kinopoisk API: ' + err.message, 'error');
         moviesGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Ошибка загрузки. Попробуйте поиск.</p>`;
       }
     }
@@ -168,6 +216,7 @@
     async function searchMovies(query) {
       sectionTitle.innerHTML = `<i class="fa-solid fa-magnifying-glass"></i> Результаты поиска: "${query}"`;
       moviesGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Ищем в базе...</p>`;
+      log('Поиск фильма: ' + query);
 
       try {
         const res = await fetch(API_URL_SEARCH + encodeURIComponent(query), {
@@ -176,6 +225,7 @@
         const data = await res.json();
         renderMovies(data.films || []);
       } catch (err) {
+        log('Ошибка поиска: ' + err.message, 'error');
         moviesGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Ничего не найдено</p>`;
       }
     }
@@ -218,10 +268,11 @@
       videoModal.classList.add('active');
       document.body.style.overflow = 'hidden';
 
-      kinoboxPlayer.innerHTML = '<div style="color:#fff; padding:20px;">Загрузка плеера...</div>';
+      log(`--- Запуск плеера для ID: ${kpId} ("${title}") ---`);
+      kinoboxPlayer.innerHTML = '';
 
-      // 1. Попытка запустить Kinobox
       if (window.kbox) {
+        log('Инициализация Kinobox...');
         try {
           kbox('#kinoboxPlayer', {
             search: { kinopoisk: kpId },
@@ -229,31 +280,24 @@
             players: {
               alloha: { enable: true },
               kodik: { enable: true },
-              collaps: { enable: true }
+              collaps: { enable: true },
+              vidsrc: { enable: true }
             }
           });
+          log('Запрос в базы отправлен');
         } catch (e) {
-          loadFallbackIframe(kpId);
+          log('Ошибка при инициализации kbox: ' + e.message, 'error');
         }
       } else {
-        // 2. Если скрипт Kinobox заблокирован AdBlock/DNS, подгружаем рабочий прямым резервом
-        loadFallbackIframe(kpId);
+        log('ВНИМАНИЕ: window.kbox недоступен!', 'error');
       }
-    }
-
-    function loadFallbackIframe(kpId) {
-      kinoboxPlayer.innerHTML = `
-        <iframe 
-          src="https://kinopoisk.cx/embed/${kpId}" 
-          allowfullscreen>
-        </iframe>
-      `;
     }
 
     function closeModal() {
       videoModal.classList.remove('active');
       kinoboxPlayer.innerHTML = '';
       document.body.style.overflow = 'auto';
+      log('Плеер закрыт');
     }
   </script>
 </body>
