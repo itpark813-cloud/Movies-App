@@ -8,6 +8,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- ЧИСТЫЙ HTML5 ПЛЕЕР (PLYR) -->
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+  <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
 
   <style>
     :root {
@@ -20,6 +24,7 @@
       --border-color: rgba(255, 255, 255, 0.1);
       --radius-md: 12px;
       --radius-lg: 20px;
+      --plyr-color-main: #e50914; /* Кастомный цвет твоего плеера */
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
@@ -68,21 +73,10 @@
     }
     .modal-close {
       position: absolute; top: 15px; right: 15px; background: rgba(0, 0, 0, 0.7); border: none;
-      color: #fff; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 100; font-size: 1.2rem;
+      color: #fff; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 101; font-size: 1.2rem;
     }
 
-    /* ПЕРЕКЛЮЧАТЕЛЬ СЕРВЕРОВ */
-    .server-controls {
-      display: flex; gap: 10px; padding: 12px 20px; background: #0e1218; border-bottom: 1px solid var(--border-color);
-    }
-    .server-btn {
-      background: var(--bg-card); border: 1px solid var(--border-color); color: #fff;
-      padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: 0.2s;
-    }
-    .server-btn.active, .server-btn:hover { background: var(--accent); border-color: var(--accent); }
-
-    .player-box { position: relative; width: 100%; min-height: 450px; background: #000; overflow: hidden; }
-    .player-box iframe { width: 100%; height: 100%; min-height: 450px; border: none; display: block; }
+    .player-box { position: relative; width: 100%; min-height: 450px; background: #000; border-radius: var(--radius-lg) var(--radius-lg) 0 0; overflow: hidden; }
 
     .modal-details { padding: 20px; }
     .modal-title-text { font-size: 1.5rem; font-weight: 800; margin-bottom: 5px; }
@@ -91,7 +85,7 @@
       .header { flex-direction: column; align-items: stretch; }
       .container { padding-top: 140px; }
       .movies-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
-      .player-box, .player-box iframe { min-height: 280px; }
+      .player-box { min-height: 280px; }
     }
   </style>
 </head>
@@ -118,12 +112,9 @@
     <div class="modal-container">
       <button class="modal-close" id="modalCloseBtn"><i class="fa-solid fa-xmark"></i></button>
 
-      <div class="server-controls">
-        <button class="server-btn active" id="btnSrv1" onclick="switchSource(1)">Сервер 1</button>
-        <button class="server-btn" id="btnSrv2" onclick="switchSource(2)">Сервер 2 (Запасной)</button>
+      <div class="player-box">
+        <video id="myPlayer" playsinline controls></video>
       </div>
-
-      <div class="player-box" id="playerBox"></div>
 
       <div class="modal-details">
         <h2 class="modal-title-text" id="modalTitle">Название фильма</h2>
@@ -133,11 +124,12 @@
   </div>
 
   <script>
+    const PROXY_WORKER_URL = 'https://my-proxy-worker.joni42581.workers.dev/';
     const API_KEY = '8c8e1a50-6322-4135-8875-5d40a5420d86';
     const API_URL_POPULAR = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/collections?type=TOP_POPULAR_MOVIES&page=1';
     const API_URL_SEARCH = 'https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=';
 
-    let currentKpId = null;
+    let plyrInstance = null;
 
     const moviesGrid = document.getElementById('moviesGrid');
     const searchForm = document.getElementById('searchForm');
@@ -145,9 +137,14 @@
     const sectionTitle = document.getElementById('sectionTitle');
     const videoModal = document.getElementById('videoModal');
     const modalCloseBtn = document.getElementById('modalCloseBtn');
-    const playerBox = document.getElementById('playerBox');
+    const videoElement = document.getElementById('myPlayer');
 
     document.addEventListener('DOMContentLoaded', () => {
+      // Инициализируем наш собственный чистый HTML5 плеер
+      plyrInstance = new Plyr('#myPlayer', {
+        controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen']
+      });
+
       loadPopularMovies();
 
       searchForm.onsubmit = (e) => {
@@ -218,35 +215,34 @@
       });
     }
 
-    function openPlayer(kpId, title, year) {
-      currentKpId = kpId;
+    async function openPlayer(kpId, title, year) {
       document.getElementById('modalTitle').textContent = title;
       document.getElementById('modalSub').textContent = `${year} • Смотреть онлайн`;
 
       videoModal.classList.add('active');
       document.body.style.overflow = 'hidden';
 
-      switchSource(1);
-    }
+      try {
+        // Запрашиваем чистый поток у нашего Worker
+        const res = await fetch(`${PROXY_WORKER_URL}?kp=${kpId}`);
+        const data = await res.json();
 
-    function switchSource(serverNum) {
-      document.getElementById('btnSrv1').classList.toggle('active', serverNum === 1);
-      document.getElementById('btnSrv2').classList.toggle('active', serverNum === 2);
-
-      playerBox.innerHTML = '';
-
-      if (serverNum === 1) {
-        // Сервер 1: Прямой плеер Alloha Embed
-        playerBox.innerHTML = `<iframe src="https://api.stranke.cloud/embed/kp/${currentKpId}" allowfullscreen style="width:100%; height:100%; border:none;"></iframe>`;
-      } else {
-        // Сервер 2: Запасной международный CDN
-        playerBox.innerHTML = `<iframe src="https://vidsrc.me/embed/movie?kp=${currentKpId}" allowfullscreen style="width:100%; height:100%; border:none;"></iframe>`;
+        if (data.streamUrl) {
+          plyrInstance.source = {
+            type: 'video',
+            sources: [{ src: data.streamUrl, type: 'video/mp4' }]
+          };
+        } else {
+          alert('Видеопоток временно недоступен');
+        }
+      } catch (e) {
+        alert('Ошибка получения видеопотока');
       }
     }
 
     function closeModal() {
       videoModal.classList.remove('active');
-      playerBox.innerHTML = '';
+      if (plyrInstance) plyrInstance.stop();
       document.body.style.overflow = 'auto';
     }
   </script>
