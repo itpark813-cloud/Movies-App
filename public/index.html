@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SevimliKino — Все фильмы мира</title>
+  <title>SevimliKino — Онлайн Фильмы</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -71,42 +71,8 @@
       color: #fff; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 100; font-size: 1.2rem;
     }
 
-    /* SERVER SWITCHER */
-    .player-servers {
-      display: flex; gap: 8px; padding: 12px 20px; background: #0c0f14; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; align-items: center;
-    }
-    .server-btn {
-      background: var(--bg-card); border: 1px solid var(--border-color); color: #fff;
-      padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: 0.2s;
-    }
-    .server-btn:hover, .server-btn.active { background: var(--accent); border-color: var(--accent); }
-
-    /* ЖЕСТКИЙ КОНТЕЙНЕР ДЛЯ ПЛЕЕРА */
-    .player-box { position: relative; width: 100%; min-height: 480px; background: #000; overflow: hidden; }
-    .player-box iframe {
-      width: 100%;
-      height: 100%;
-      min-height: 480px;
-      border: 0;
-      display: block;
-    }
-
-    /* DEBUG LOGS PANEL */
-    .debug-panel {
-      background: #080a0d; border-top: 1px solid var(--border-color); padding: 12px 20px; font-family: monospace; font-size: 0.8rem;
-    }
-    .debug-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .debug-title { color: #f59e0b; font-weight: bold; }
-    .copy-btn {
-      background: var(--bg-card); border: 1px solid var(--border-color); color: #fff;
-      padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;
-    }
-    .copy-btn:hover { background: var(--accent); }
-    .debug-logs {
-      background: #000; color: #10b981; padding: 10px; border-radius: 6px;
-      max-height: 100px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;
-    }
-    .log-err { color: #ef4444; }
+    .player-box { position: relative; width: 100%; min-height: 480px; background: #000; border-radius: var(--radius-lg) var(--radius-lg) 0 0; overflow: hidden; }
+    .player-box iframe { width: 100%; height: 100%; min-height: 480px; border: 0; display: block; }
 
     .modal-details { padding: 20px; }
     .modal-title-text { font-size: 1.6rem; font-weight: 800; margin-bottom: 5px; }
@@ -142,54 +108,20 @@
     <div class="modal-container">
       <button class="modal-close" id="modalCloseBtn"><i class="fa-solid fa-xmark"></i></button>
 
-      <!-- ПАНЕЛЬ ЧИСТЫХ ПЛЕЕРОВ -->
-      <div class="player-servers">
-        <span style="font-size: 0.8rem; color: var(--text-muted);">Плеер:</span>
-        <button class="server-btn active" onclick="switchServer(1)">Плеер 1 (Embed.su)</button>
-        <button class="server-btn" onclick="switchServer(2)">Плеер 2 (2Embed)</button>
-        <button class="server-btn" onclick="switchServer(3)">Плеер 3 (VidSrc API)</button>
-      </div>
-
       <div class="player-box" id="playerBox"></div>
-
-      <!-- ЛОГИ OTЛАДКИ -->
-      <div class="debug-panel">
-        <div class="debug-header">
-          <span class="debug-title"><i class="fa-solid fa-terminal"></i> Лог плеера:</span>
-          <button class="copy-btn" onclick="copyLogs()"><i class="fa-solid fa-copy"></i> Скопировать логи</button>
-        </div>
-        <div class="debug-logs" id="debugLogs">Готов к работе</div>
-      </div>
 
       <div class="modal-details">
         <h2 class="modal-title-text" id="modalTitle">Название фильма</h2>
-        <p style="color: var(--text-muted); font-size: 0.9rem;" id="modalSub">Полная версия</p>
+        <p style="color: var(--text-muted); font-size: 0.9rem;" id="modalSub">Смотреть онлайн</p>
       </div>
     </div>
   </div>
 
   <script>
-    function log(msg, type = 'info') {
-      const logsEl = document.getElementById('debugLogs');
-      if (!logsEl) return;
-      const time = new Date().toLocaleTimeString();
-      let cls = type === 'error' ? 'class="log-err"' : '';
-      logsEl.innerHTML += `<div ${cls}>[${time}] ${msg}</div>`;
-      logsEl.scrollTop = logsEl.scrollHeight;
-    }
-
-    function copyLogs() {
-      navigator.clipboard.writeText(document.getElementById('debugLogs').innerText);
-      alert('Логи скопированы!');
-    }
-  </script>
-
-  <script>
+    const PROXY_WORKER_URL = 'https://my-proxy-worker.joni42581.workers.dev/';
     const API_KEY = '8c8e1a50-6322-4135-8875-5d40a5420d86';
     const API_URL_POPULAR = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/collections?type=TOP_POPULAR_MOVIES&page=1';
     const API_URL_SEARCH = 'https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=';
-
-    let activeKpId = null;
 
     const moviesGrid = document.getElementById('moviesGrid');
     const searchForm = document.getElementById('searchForm');
@@ -220,7 +152,6 @@
         const data = await res.json();
         renderMovies(data.items || []);
       } catch (err) {
-        log('Ошибка Кинопоиск API: ' + err.message, 'error');
         moviesGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Ошибка загрузки каталога</p>`;
       }
     }
@@ -236,7 +167,6 @@
         const data = await res.json();
         renderMovies(data.films || []);
       } catch (err) {
-        log('Ошибка поиска: ' + err.message, 'error');
         moviesGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Ничего не найдено</p>`;
       }
     }
@@ -273,36 +203,14 @@
     }
 
     function openPlayer(kpId, title, year) {
-      activeKpId = kpId;
       document.getElementById('modalTitle').textContent = title;
       document.getElementById('modalSub').textContent = `${year} • Смотреть онлайн`;
 
       videoModal.classList.add('active');
       document.body.style.overflow = 'hidden';
 
-      log(`--- Запуск ID: ${kpId} ("${title}") ---`);
-      switchServer(1);
-    }
-
-    function switchServer(serverNum) {
-      document.querySelectorAll('.server-btn').forEach((btn, idx) => {
-        btn.classList.toggle('active', idx + 1 === serverNum);
-      });
-
-      playerBox.innerHTML = '';
-
-      if (serverNum === 1) {
-        log('Плеер 1: Подключение к чистой видео-базе Embed.su...');
-        playerBox.innerHTML = `<iframe src="https://embed.su/embed/movie/${activeKpId}" allowfullscreen scrolling="no"></iframe>`;
-      } 
-      else if (serverNum === 2) {
-        log('Плеер 2: Подключение к 2Embed...');
-        playerBox.innerHTML = `<iframe src="https://www.2embed.cc/embed/${activeKpId}" allowfullscreen scrolling="no"></iframe>`;
-      } 
-      else if (serverNum === 3) {
-        log('Плеер 3: Подключение к VidSrc XYZ...');
-        playerBox.innerHTML = `<iframe src="https://vidsrc.xyz/embed/movie?kp=${activeKpId}" allowfullscreen scrolling="no"></iframe>`;
-      }
+      // Загрузка чистого плеера через твой Cloudflare Worker
+      playerBox.innerHTML = `<iframe src="${PROXY_WORKER_URL}?kp=${kpId}" allowfullscreen style="width:100%; height:100%; border:none;"></iframe>`;
     }
 
     function closeModal() {
