@@ -81,8 +81,15 @@
     }
     .server-btn:hover, .server-btn.active { background: var(--accent); border-color: var(--accent); }
 
-    .player-box { position: relative; width: 100%; min-height: 480px; background: #000; }
-    .player-box iframe { width: 100%; height: 100%; min-height: 480px; border: none; display: block; }
+    /* ЖЕСТКИЙ КОНТЕЙНЕР ДЛЯ ПЛЕЕРА */
+    .player-box { position: relative; width: 100%; min-height: 480px; background: #000; overflow: hidden; }
+    .player-box iframe {
+      width: 100%;
+      height: 100%;
+      min-height: 480px;
+      border: 0;
+      display: block;
+    }
 
     /* DEBUG LOGS PANEL */
     .debug-panel {
@@ -97,7 +104,7 @@
     .copy-btn:hover { background: var(--accent); }
     .debug-logs {
       background: #000; color: #10b981; padding: 10px; border-radius: 6px;
-      max-height: 120px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;
+      max-height: 100px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;
     }
     .log-err { color: #ef4444; }
 
@@ -135,21 +142,21 @@
     <div class="modal-container">
       <button class="modal-close" id="modalCloseBtn"><i class="fa-solid fa-xmark"></i></button>
 
-      <!-- ПАНЕЛЬ СЕРВЕРОВ БЕЗ БЛОКИРОВОК -->
+      <!-- ПАНЕЛЬ ЧИСТЫХ ПЛЕЕРОВ -->
       <div class="player-servers">
-        <span style="font-size: 0.8rem; color: var(--text-muted);">Сервер:</span>
-        <button class="server-btn active" onclick="switchServer(1)">Сервер 1 (Основной)</button>
-        <button class="server-btn" onclick="switchServer(2)">Сервер 2 (Обходной)</button>
-        <button class="server-btn" onclick="switchServer(3)">Сервер 3 (Запасной)</button>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Плеер:</span>
+        <button class="server-btn active" onclick="switchServer(1)">Плеер 1 (Embed.su)</button>
+        <button class="server-btn" onclick="switchServer(2)">Плеер 2 (2Embed)</button>
+        <button class="server-btn" onclick="switchServer(3)">Плеер 3 (VidSrc API)</button>
       </div>
 
       <div class="player-box" id="playerBox"></div>
 
-      <!-- ЛОГИ ОТЛАДКИ -->
+      <!-- ЛОГИ OTЛАДКИ -->
       <div class="debug-panel">
         <div class="debug-header">
-          <span class="debug-title"><i class="fa-solid fa-terminal"></i> Лог подключения:</span>
-          <button class="copy-btn" onclick="copyLogs()"><i class="fa-solid fa-copy"></i> Скопировать</button>
+          <span class="debug-title"><i class="fa-solid fa-terminal"></i> Лог плеера:</span>
+          <button class="copy-btn" onclick="copyLogs()"><i class="fa-solid fa-copy"></i> Скопировать логи</button>
         </div>
         <div class="debug-logs" id="debugLogs">Готов к работе</div>
       </div>
@@ -285,16 +292,16 @@
       playerBox.innerHTML = '';
 
       if (serverNum === 1) {
-        log('Загрузка Сервера 1 (Lumex Embed)...');
-        playerBox.innerHTML = `<iframe src="https://lumex.host/embed/${activeKpId}" allowfullscreen></iframe>`;
+        log('Плеер 1: Подключение к чистой видео-базе Embed.su...');
+        playerBox.innerHTML = `<iframe src="https://embed.su/embed/movie/${activeKpId}" allowfullscreen scrolling="no"></iframe>`;
       } 
       else if (serverNum === 2) {
-        log('Загрузка Сервера 2 (KinoKrad Cloud)...');
-        playerBox.innerHTML = `<iframe src="https://kinokrad.cc/embed/${activeKpId}" allowfullscreen></iframe>`;
+        log('Плеер 2: Подключение к 2Embed...');
+        playerBox.innerHTML = `<iframe src="https://www.2embed.cc/embed/${activeKpId}" allowfullscreen scrolling="no"></iframe>`;
       } 
       else if (serverNum === 3) {
-        log('Загрузка Сервера 3 (VidSrc CDN)...');
-        playerBox.innerHTML = `<iframe src="https://vidsrc.cc/v2/embed/movie/${activeKpId}" allowfullscreen></iframe>`;
+        log('Плеер 3: Подключение к VidSrc XYZ...');
+        playerBox.innerHTML = `<iframe src="https://vidsrc.xyz/embed/movie?kp=${activeKpId}" allowfullscreen scrolling="no"></iframe>`;
       }
     }
 
