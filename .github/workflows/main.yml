@@ -3,7 +3,8 @@ name: Deploy to Firebase Hosting
 on:
   push:
     branches:
-      - main  # или master (зависит от названия вашей главной ветки в GitHub)
+      - main
+      - master
 
 jobs:
   build_and_deploy:
