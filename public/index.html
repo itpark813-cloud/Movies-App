@@ -6,9 +6,12 @@
   <title>SevimliKino — Онлайн Фильмы</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
+  <!-- Подключаем Kinobox напрямую -->
+  <script src="https://kinobox.in/kinobox.min.js"></script>
+
   <style>
     :root {
       --bg-primary: #0a0c10;
@@ -55,7 +58,7 @@
     .card-title { font-size: 0.95rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
 
-    /* MODAL & PLAYER */
+    /* МОДАЛЬНОЕ ОКНО ПЛЕЕРА */
     .modal {
       position: fixed; inset: 0; background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(15px);
       z-index: 2000; display: flex; align-items: center; justify-content: center;
@@ -63,7 +66,7 @@
     }
     .modal.active { opacity: 1; pointer-events: auto; }
     .modal-container {
-      background: var(--bg-secondary); border-radius: var(--radius-lg); width: 100%; max-width: 1000px;
+      background: var(--bg-secondary); border-radius: var(--radius-lg); width: 100%; max-width: 900px;
       max-height: 95vh; overflow-y: auto; border: 1px solid var(--border-color); position: relative;
     }
     .modal-close {
@@ -71,17 +74,16 @@
       color: #fff; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 100; font-size: 1.2rem;
     }
 
-    .player-box { position: relative; width: 100%; min-height: 480px; background: #000; border-radius: var(--radius-lg) var(--radius-lg) 0 0; overflow: hidden; }
-    .player-box iframe { width: 100%; height: 100%; min-height: 480px; border: 0; display: block; }
+    .player-box { position: relative; width: 100%; min-height: 450px; background: #000; border-radius: var(--radius-lg) var(--radius-lg) 0 0; overflow: hidden; }
 
     .modal-details { padding: 20px; }
-    .modal-title-text { font-size: 1.6rem; font-weight: 800; margin-bottom: 5px; }
+    .modal-title-text { font-size: 1.5rem; font-weight: 800; margin-bottom: 5px; }
 
     @media (max-width: 768px) {
       .header { flex-direction: column; align-items: stretch; }
       .container { padding-top: 140px; }
       .movies-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
-      .player-box, .player-box iframe { min-height: 260px; }
+      .player-box { min-height: 280px; }
     }
   </style>
 </head>
@@ -108,6 +110,7 @@
     <div class="modal-container">
       <button class="modal-close" id="modalCloseBtn"><i class="fa-solid fa-xmark"></i></button>
 
+      <!-- Сюда Kinobox встроит рабочий плеер -->
       <div class="player-box" id="playerBox"></div>
 
       <div class="modal-details">
@@ -118,7 +121,6 @@
   </div>
 
   <script>
-    const PROXY_WORKER_URL = 'https://my-proxy-worker.joni42581.workers.dev/';
     const API_KEY = '8c8e1a50-6322-4135-8875-5d40a5420d86';
     const API_URL_POPULAR = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/collections?type=TOP_POPULAR_MOVIES&page=1';
     const API_URL_SEARCH = 'https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=';
@@ -209,8 +211,18 @@
       videoModal.classList.add('active');
       document.body.style.overflow = 'hidden';
 
-      // Загрузка чистого плеера через твой Cloudflare Worker
-      playerBox.innerHTML = `<iframe src="${PROXY_WORKER_URL}?kp=${kpId}" allowfullscreen style="width:100%; height:100%; border:none;"></iframe>`;
+      // Очищаем прошлый плеер
+      playerBox.innerHTML = '';
+
+      // Запускаем Kinobox напрямую без iframe
+      if (window.kbox) {
+        kbox('#playerBox', {
+          search: { kinopoisk: kpId },
+          menu: { enable: true, default: 'players', mobile: true }
+        });
+      } else {
+        playerBox.innerHTML = '<p style="color:white; padding:20px; text-align:center;">Ошибка загрузки плеера. Перезагрузите страницу.</p>';
+      }
     }
 
     function closeModal() {
