@@ -71,26 +71,18 @@
       color: #fff; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 100; font-size: 1.2rem;
     }
 
-    .player-box { position: relative; width: 100%; min-height: 450px; background: #000; }
-    .kinobox_player { width: 100%; height: 100%; min-height: 450px; }
-
-    /* DEBUG LOGS PANEL */
-    .debug-panel {
-      background: #080a0d; border-top: 1px solid var(--border-color); padding: 15px; font-family: monospace; font-size: 0.8rem;
+    /* PLAYER CONTROL BUTTONS (Резервные плееры) */
+    .player-servers {
+      display: flex; gap: 8px; padding: 12px 20px; background: #0c0f14; border-bottom: 1px solid var(--border-color); flex-wrap: wrap;
     }
-    .debug-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .debug-title { color: #f59e0b; font-weight: bold; }
-    .copy-btn {
+    .server-btn {
       background: var(--bg-card); border: 1px solid var(--border-color); color: #fff;
-      padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;
+      padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: 0.2s;
     }
-    .copy-btn:hover { background: var(--accent); }
-    .debug-logs {
-      background: #000; color: #10b981; padding: 10px; border-radius: 6px;
-      max-height: 120px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;
-    }
-    .log-err { color: #ef4444; }
-    .log-warn { color: #f59e0b; }
+    .server-btn:hover, .server-btn.active { background: var(--accent); border-color: var(--accent); }
+
+    .player-box { position: relative; width: 100%; min-height: 480px; background: #000; }
+    .kinobox_player, .player-box iframe { width: 100%; height: 100%; min-height: 480px; border: none; }
 
     .modal-details { padding: 20px; }
     .modal-title-text { font-size: 1.6rem; font-weight: 800; margin-bottom: 5px; }
@@ -99,7 +91,7 @@
       .header { flex-direction: column; align-items: stretch; }
       .container { padding-top: 140px; }
       .movies-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
-      .player-box, .kinobox_player { min-height: 250px; }
+      .player-box, .kinobox_player, .player-box iframe { min-height: 260px; }
     }
   </style>
 </head>
@@ -126,17 +118,15 @@
     <div class="modal-container">
       <button class="modal-close" id="modalCloseBtn"><i class="fa-solid fa-xmark"></i></button>
 
-      <div class="player-box">
-        <div class="kinobox_player" id="kinoboxPlayer"></div>
+      <!-- ПАНЕЛЬ ВЫБОРА СЕРВЕРА -->
+      <div class="player-servers" id="serverPanel">
+        <button class="server-btn active" onclick="switchServer(1)">Сервер 1 (Основные)</button>
+        <button class="server-btn" onclick="switchServer(2)">Сервер 2 (Обход блокировок)</button>
+        <button class="server-btn" onclick="switchServer(3)">Сервер 3 (Запасной)</button>
       </div>
 
-      <!-- ЛОГИ ОТЛАДКИ -->
-      <div class="debug-panel">
-        <div class="debug-header">
-          <span class="debug-title"><i class="fa-solid fa-terminal"></i> Лог загрузки плеера:</span>
-          <button class="copy-btn" onclick="copyLogs()"><i class="fa-solid fa-copy"></i> Скопировать логи</button>
-        </div>
-        <div class="debug-logs" id="debugLogs">Инициализация системы...</div>
+      <div class="player-box" id="playerBox">
+        <div class="kinobox_player" id="kinoboxPlayer"></div>
       </div>
 
       <div class="modal-details">
@@ -146,29 +136,9 @@
     </div>
   </div>
 
-  <!-- Подгружаем скрипт с отслеживанием ошибок -->
-  <script>
-    function log(msg, type = 'info') {
-      const logsEl = document.getElementById('debugLogs');
-      const time = new Date().toLocaleTimeString();
-      let cls = '';
-      if (type === 'error') cls = 'class="log-err"';
-      if (type === 'warn') cls = 'class="log-warn"';
-      
-      logsEl.innerHTML += `<div ${cls}>[${time}] ${msg}</div>`;
-      logsEl.scrollTop = logsEl.scrollHeight;
-    }
-
-    function copyLogs() {
-      const logsText = document.getElementById('debugLogs').innerText;
-      navigator.clipboard.writeText(logsText);
-      alert('Логи скопированы в буфер обмена!');
-    }
-  </script>
-
+  <!-- Пробуем подгрузить Kinobox -->
   <script src="https://kinobox.in/kinobox.min.js" 
-          onload="log('Скрипт Kinobox успешно загружен с CDN')" 
-          onerror="log('ОШИБКА: Загрузка Kinobox CDN заблокирована провайдером или AdBlock', 'error')">
+          onerror="window.kinoboxBlocked = true;">
   </script>
 
   <script>
@@ -176,16 +146,17 @@
     const API_URL_POPULAR = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/collections?type=TOP_POPULAR_MOVIES&page=1';
     const API_URL_SEARCH = 'https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=';
 
+    let activeKpId = null;
+
     const moviesGrid = document.getElementById('moviesGrid');
     const searchForm = document.getElementById('searchForm');
     const searchInput = document.getElementById('searchInput');
     const sectionTitle = document.getElementById('sectionTitle');
     const videoModal = document.getElementById('videoModal');
     const modalCloseBtn = document.getElementById('modalCloseBtn');
-    const kinoboxPlayer = document.getElementById('kinoboxPlayer');
+    const playerBox = document.getElementById('playerBox');
 
     document.addEventListener('DOMContentLoaded', () => {
-      log('Приложение запущено. Хост: ' + window.location.hostname);
       loadPopularMovies();
 
       searchForm.onsubmit = (e) => {
@@ -199,16 +170,13 @@
     });
 
     async function loadPopularMovies() {
-      log('Загрузка популярных фильмов с Kinopoisk API...');
       try {
         const res = await fetch(API_URL_POPULAR, {
           headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' }
         });
         const data = await res.json();
-        log('Получено фильмов: ' + (data.items ? data.items.length : 0));
         renderMovies(data.items || []);
       } catch (err) {
-        log('Ошибка загрузки каталога Kinopoisk API: ' + err.message, 'error');
         moviesGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Ошибка загрузки. Попробуйте поиск.</p>`;
       }
     }
@@ -216,7 +184,6 @@
     async function searchMovies(query) {
       sectionTitle.innerHTML = `<i class="fa-solid fa-magnifying-glass"></i> Результаты поиска: "${query}"`;
       moviesGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Ищем в базе...</p>`;
-      log('Поиск фильма: ' + query);
 
       try {
         const res = await fetch(API_URL_SEARCH + encodeURIComponent(query), {
@@ -225,7 +192,6 @@
         const data = await res.json();
         renderMovies(data.films || []);
       } catch (err) {
-        log('Ошибка поиска: ' + err.message, 'error');
         moviesGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Ничего не найдено</p>`;
       }
     }
@@ -262,42 +228,52 @@
     }
 
     function openPlayer(kpId, title, year) {
+      activeKpId = kpId;
       document.getElementById('modalTitle').textContent = title;
       document.getElementById('modalSub').textContent = `${year} • Смотреть онлайн`;
 
       videoModal.classList.add('active');
       document.body.style.overflow = 'hidden';
 
-      log(`--- Запуск плеера для ID: ${kpId} ("${title}") ---`);
-      kinoboxPlayer.innerHTML = '';
-
-      if (window.kbox) {
-        log('Инициализация Kinobox...');
-        try {
-          kbox('#kinoboxPlayer', {
-            search: { kinopoisk: kpId },
-            menu: { enable: true },
-            players: {
-              alloha: { enable: true },
-              kodik: { enable: true },
-              collaps: { enable: true },
-              vidsrc: { enable: true }
-            }
-          });
-          log('Запрос в базы отправлен');
-        } catch (e) {
-          log('Ошибка при инициализации kbox: ' + e.message, 'error');
-        }
+      // Авто-выбор источника
+      if (window.kbox && !window.kinoboxBlocked) {
+        switchServer(1);
       } else {
-        log('ВНИМАНИЕ: window.kbox недоступен!', 'error');
+        // Если Kinobox заблокирован провайдером, сразу включаем Сервер 2!
+        switchServer(2);
+      }
+    }
+
+    function switchServer(serverNum) {
+      document.querySelectorAll('.server-btn').forEach((btn, idx) => {
+        btn.classList.toggle('active', idx + 1 === serverNum);
+      });
+
+      playerBox.innerHTML = '';
+
+      if (serverNum === 1) {
+        if (window.kbox && !window.kinoboxBlocked) {
+          playerBox.innerHTML = '<div class="kinobox_player" id="kinoboxPlayer"></div>';
+          kbox('#kinoboxPlayer', {
+            search: { kinopoisk: activeKpId },
+            menu: { enable: true },
+            players: { alloha: { enable: true }, kodik: { enable: true }, collaps: { enable: true } }
+          });
+        } else {
+          // Автопереключение, если 1 сервер заблокирован
+          switchServer(2);
+        }
+      } else if (serverNum === 2) {
+        playerBox.innerHTML = `<iframe src="https://voidboost.net/embed/${activeKpId}" allowfullscreen></iframe>`;
+      } else if (serverNum === 3) {
+        playerBox.innerHTML = `<iframe src="https://kinopoisk.cx/embed/${activeKpId}" allowfullscreen></iframe>`;
       }
     }
 
     function closeModal() {
       videoModal.classList.remove('active');
-      kinoboxPlayer.innerHTML = '';
+      playerBox.innerHTML = '';
       document.body.style.overflow = 'auto';
-      log('Плеер закрыт');
     }
   </script>
 </body>
