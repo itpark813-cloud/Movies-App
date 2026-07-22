@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CinePulse — Фильмы и Сериалы</title>
+    <title>SevimliKino — Любимый портал кино</title>
     <style>
         :root {
             --bg-main: #0a0d14;
@@ -278,11 +278,50 @@
             cursor: pointer;
         }
 
-        /* АУТЕНТИФИКАЦИЯ: ГРАФИЧЕСКИЙ КЛЮЧ / ПИН */
+        /* ФОРМА АУТЕНТИФИКАЦИИ */
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .form-group input {
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 10px 14px;
+            color: #fff;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: var(--accent);
+        }
+
+        .error-msg {
+            color: #ff4757;
+            font-size: 0.85rem;
+            display: none;
+            text-align: center;
+        }
+
+        /* АУТЕНТИФИКАЦИЯ: ПИН И ГРАФИЧЕСКИЙ КЛЮЧ */
         .auth-tabs {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 8px;
+            margin-bottom: 16px;
             background: var(--bg-main);
             padding: 4px;
             border-radius: var(--radius-md);
@@ -292,7 +331,7 @@
             flex: 1;
             padding: 8px;
             text-align: center;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 600;
             color: var(--text-secondary);
             border-radius: 6px;
@@ -309,7 +348,7 @@
             display: flex;
             justify-content: center;
             gap: 12px;
-            margin: 20px 0;
+            margin: 16px 0;
         }
 
         .pin-dot {
@@ -330,7 +369,7 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
-            max-width: 260px;
+            max-width: 240px;
             margin: 0 auto;
         }
 
@@ -340,20 +379,18 @@
             background: var(--bg-main);
             border: 1px solid var(--border-color);
             color: #fff;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: 0.15s;
         }
 
         .num-btn:active {
             background: var(--accent);
         }
 
-        /* CANVAS ДЛЯ ГРАФИЧЕСКОГО КЛЮЧА */
         .pattern-container {
             display: flex;
             flex-direction: column;
@@ -420,7 +457,7 @@
 
     <header>
         <div class="logo" id="logoBtn">
-            🎬 Cine<span>Pulse</span>
+            🎬 Sevimli<span>Kino</span>
         </div>
         <div class="user-nav">
             <button class="btn" id="favBtn" style="display:none;">❤️ Избранное</button>
@@ -448,17 +485,57 @@
     <!-- МОДАЛКА АУТЕНТИФИКАЦИИ -->
     <div class="modal-overlay" id="authModal">
         <div class="modal-card">
-            <button class="modal-close" class="closeAuth">&times;</button>
-            <h3 style="text-align: center; margin-bottom: 6px;" id="authTitle">Вход в аккаунт</h3>
-            <p style="text-align: center; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 16px;" id="authSubtitle">Введите Ваш ПИН-код</p>
+            <button class="modal-close" id="closeAuth">&times;</button>
+            <h3 style="text-align: center; margin-bottom: 6px;" id="authTitle">Вход в SevimliKino</h3>
+            <p style="text-align: center; color: var(--text-secondary); font-size: 0.85rem;" id="authSubtitle">Выберите удобный способ авторизации</p>
 
-            <div class="auth-tabs">
-                <div class="auth-tab active" id="tabPin">PIN-код</div>
+            <div class="auth-tabs" style="margin-top: 14px;">
+                <div class="auth-tab active" id="tabEmail">Email</div>
+                <div class="auth-tab" id="tabPin">PIN-код</div>
                 <div class="auth-tab" id="tabPattern">Графический ключ</div>
             </div>
 
-            <!-- ВВОД ПИН -->
-            <div id="pinBlock">
+            <!-- 1. АВТОРИЗАЦИЯ ЧЕРЕЗ EMAIL (FIREBASE) -->
+            <div id="emailBlock">
+                <form class="auth-form" id="loginForm">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="loginEmail" required placeholder="example@mail.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Пароль</label>
+                        <input type="password" id="loginPass" required placeholder="••••••••">
+                    </div>
+                    <div class="error-msg" id="errorMsg"></div>
+                    <button type="submit" class="btn btn-accent" style="width: 100%; margin-top: 6px;">Войти</button>
+                    <p style="font-size:0.8rem; text-align:center; color: var(--text-secondary); cursor:pointer;" id="switchReg">
+                        Нет аккаунта? Зарегистрироваться
+                    </p>
+                </form>
+
+                <form class="auth-form" id="regForm" style="display: none;">
+                    <div class="form-group">
+                        <label>Имя</label>
+                        <input type="text" id="regName" required placeholder="Ваше имя">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="regEmail" required placeholder="example@mail.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Пароль</label>
+                        <input type="password" id="regPass" required placeholder="••••••••">
+                    </div>
+                    <div class="error-msg" id="regErrorMsg"></div>
+                    <button type="submit" class="btn btn-accent" style="width: 100%; margin-top: 6px;">Зарегистрироваться</button>
+                    <p style="font-size:0.8rem; text-align:center; color: var(--text-secondary); cursor:pointer;" id="switchLogin">
+                        Уже есть аккаунт? Войти
+                    </p>
+                </form>
+            </div>
+
+            <!-- 2. ВВОД ПИН (ЛОКАЛЬНО) -->
+            <div id="pinBlock" style="display: none;">
                 <div class="pin-display">
                     <div class="pin-dot"></div>
                     <div class="pin-dot"></div>
@@ -481,7 +558,7 @@
                 </div>
             </div>
 
-            <!-- ВВОД ГРАФИЧЕСКОГО КЛЮЧА -->
+            <!-- 3. ВВОД ГРАФИЧЕСКОГО КЛЮЧА -->
             <div id="patternBlock" class="pattern-container" style="display: none;">
                 <canvas id="patternCanvas" width="240" height="240"></canvas>
             </div>
@@ -498,7 +575,7 @@
                     <div class="detail-header">
                         <div>
                             <h2 class="detail-title" id="mTitle">Название фильма</h2>
-                            <span class="movie-meta" id="mMeta">2023 • Жанр</span>
+                            <span class="movie-meta" id="mMeta">2024 • Жанр</span>
                         </div>
                         <button class="btn" id="toggleFavBtn">❤️ В избранное</button>
                     </div>
@@ -508,7 +585,35 @@
         </div>
     </div>
 
-    <script>
+    <!-- ИНИЦИАЛИЗАЦИЯ FIREBASE SDK И ЛОГИКА ПРИЛОЖЕНИЯ -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            updateProfile, 
+            signOut, 
+            onAuthStateChanged,
+            sendEmailVerification 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTcRlgSy_tQ_nxyk7Y8-DjiQ8RnjA-hYw",
+            authDomain: "sevimlikino.firebaseapp.com",
+            projectId: "sevimlikino",
+            storageBucket: "sevimlikino.firebasestorage.app",
+            messagingSenderId: "166243734025",
+            appId: "1:166243734025:web:6d258f207c8c58ab671ed8",
+            measurementId: "G-VPG39S6R4T"
+        };
+
+        // Инициализация
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+
         // --- ДАННЫЕ ФИЛЬМОВ ---
         const MOVIES_DATA = [
             {
@@ -550,53 +655,46 @@
                 poster: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=500&q=80",
                 trailer: "https://www.youtube.com/embed/gCcx85zbxz4",
                 desc: "Офицер К раскрывает давнюю тайну, которая может погрузить остатки общества в хаос."
-            },
-            {
-                id: 5,
-                title: "Оппенгеймер",
-                genre: "Драма",
-                year: 2023,
-                rating: 8.9,
-                poster: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=500&q=80",
-                trailer: "https://www.youtube.com/embed/uYPbbksJxIg",
-                desc: "История жизни американского физика Роберта Оппенгеймера, который стоял во главе первых разработок ядерного оружия."
             }
         ];
 
         // --- СОСТОЯНИЕ ПРИЛОЖЕНИЯ ---
         let state = {
-            user: JSON.parse(localStorage.getItem('cine_user')) || null,
-            favorites: JSON.parse(localStorage.getItem('cine_favs')) || [],
+            user: null,
+            favorites: JSON.parse(localStorage.getItem('sk_favs')) || [],
             currentFilter: 'all',
             searchQuery: '',
             selectedMovie: null,
-            inputPin: '',
-            authMode: 'pin' // 'pin' или 'pattern'
+            inputPin: ''
         };
 
-        // --- DOM ЭЛЕМЕНТЫ ---
         const grid = document.getElementById('moviesGrid');
-        const searchInput = document.getElementById('searchInput');
-        const genresContainer = document.getElementById('genresContainer');
         const loginBtn = document.getElementById('loginBtn');
         const favBtn = document.getElementById('favBtn');
         const authModal = document.getElementById('authModal');
         const detailModal = document.getElementById('detailModal');
 
-        // --- РЕНДЕР КАРТОЧЕК ---
+        // Отслеживание входа через Firebase Auth
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                state.user = user;
+                loginBtn.textContent = user.displayName || user.email.split('@')[0];
+                favBtn.style.display = 'inline-flex';
+            } else {
+                state.user = null;
+                loginBtn.textContent = 'Войти в профиль';
+                favBtn.style.display = 'none';
+            }
+        });
+
+        // --- РЕНДЕР ФИЛЬМОВ ---
         function renderMovies() {
             grid.innerHTML = '';
-            
             const filtered = MOVIES_DATA.filter(movie => {
                 const matchGenre = state.currentFilter === 'all' || movie.genre === state.currentFilter;
                 const matchSearch = movie.title.toLowerCase().includes(state.searchQuery.toLowerCase());
                 return matchGenre && matchSearch;
             });
-
-            if (filtered.length === 0) {
-                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 40px;">Фильмы не найдены</div>`;
-                return;
-            }
 
             filtered.forEach(movie => {
                 const card = document.createElement('div');
@@ -616,44 +714,36 @@
             });
         }
 
-        // --- ДЕТАЛИ ФИЛЬМА ---
         function openMovieDetail(movie) {
             state.selectedMovie = movie;
             document.getElementById('mTitle').textContent = movie.title;
             document.getElementById('mMeta').textContent = `${movie.year} • ${movie.genre} • ★ ${movie.rating}`;
             document.getElementById('mDesc').textContent = movie.desc;
-            document.getElementById('trailerBox').innerHTML = `<iframe src="${movie.trailer}?autoplay=0" allowfullscreen></iframe>`;
+            document.getElementById('trailerBox').innerHTML = `<iframe src="${movie.trailer}" allowfullscreen></iframe>`;
             
-            updateFavButtonUI();
+            updateFavButton();
             detailModal.classList.add('active');
         }
 
-        function updateFavButtonUI() {
+        function updateFavButton() {
             const toggleBtn = document.getElementById('toggleFavBtn');
             if (!state.selectedMovie) return;
-
             const isFav = state.favorites.includes(state.selectedMovie.id);
             toggleBtn.textContent = isFav ? '❤️ В избранном' : '🤍 В избранное';
-            toggleBtn.style.borderColor = isFav ? 'var(--accent)' : 'var(--border-color)';
         }
 
         document.getElementById('toggleFavBtn').addEventListener('click', () => {
             if (!state.user) {
-                alert('Пожалуйста, войдите в профиль, чтобы сохранять фильмы!');
+                alert('Сначала войдите в аккаунт!');
                 return;
             }
-
             const id = state.selectedMovie.id;
             const idx = state.favorites.indexOf(id);
-
-            if (idx > -1) {
-                state.favorites.splice(idx, 1);
-            } else {
-                state.favorites.push(id);
-            }
-
-            localStorage.setItem('cine_favs', JSON.stringify(state.favorites));
-            updateFavButtonUI();
+            if (idx > -1) state.favorites.splice(idx, 1);
+            else state.favorites.push(id);
+            
+            localStorage.setItem('sk_favs', JSON.stringify(state.favorites));
+            updateFavButton();
         });
 
         document.getElementById('closeDetail').addEventListener('click', () => {
@@ -661,126 +751,109 @@
             document.getElementById('trailerBox').innerHTML = '';
         });
 
-        // --- ПОИСК И ФИЛЬТРЫ ---
-        searchInput.addEventListener('input', (e) => {
-            state.searchQuery = e.target.value;
-            renderMovies();
-        });
-
-        genresContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('chip')) {
-                document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-                e.target.classList.add('active');
-                state.currentFilter = e.target.dataset.genre;
-                renderMovies();
-            }
-        });
-
-        // --- УПРАВЛЕНИЕ СЕССИЕЙ ПОЛЬЗОВАТЕЛЯ ---
-        function updateAuthUI() {
-            if (state.user) {
-                loginBtn.textContent = 'Выйти';
-                loginBtn.classList.remove('btn-accent');
-                favBtn.style.display = 'inline-flex';
-            } else {
-                loginBtn.textContent = 'Войти в профиль';
-                loginBtn.classList.add('btn-accent');
-                favBtn.style.display = 'none';
-            }
-        }
-
+        // --- ЛОГИКА АВТОРИЗАЦИИ МЕЖДУ FIREBASE И ЛОКАЛЬНОЙ ---
         loginBtn.addEventListener('click', () => {
             if (state.user) {
-                state.user = null;
-                localStorage.removeItem('cine_user');
-                updateAuthUI();
+                if (confirm("Вы действительно хотите выйти из профиля?")) {
+                    signOut(auth);
+                }
             } else {
-                openAuthModal();
+                authModal.classList.add('active');
             }
         });
 
-        function openAuthModal() {
-            const hasUser = !!localStorage.getItem('cine_pin_db');
-            document.getElementById('authTitle').textContent = hasUser ? 'Вход в аккаунт' : 'Создание профиля';
-            document.getElementById('authSubtitle').textContent = hasUser ? 'Введите сохраненный ключ' : 'Задайте новый ПИН (4 цифры)';
-            authModal.classList.add('active');
-            resetPin();
-        }
-
-        document.querySelector('.modal-close').addEventListener('click', () => {
+        document.getElementById('closeAuth').addEventListener('click', () => {
             authModal.classList.remove('active');
         });
 
-        // --- ПИН-КОД ЛОГИКА ---
-        function handlePinInput(digit) {
-            if (state.inputPin.length < 4) {
-                state.inputPin += digit;
-                updatePinDots();
-                if (state.inputPin.length === 4) {
-                    setTimeout(verifyPin, 150);
+        // Вход по Email (Firebase)
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const pass = document.getElementById('loginPass').value;
+            const errEl = document.getElementById('errorMsg');
+
+            try {
+                const res = await signInWithEmailAndPassword(auth, email, pass);
+                if (!res.user.emailVerified) {
+                    errEl.textContent = "Пожалуйста, подтвердите Ваш Email по ссылке в письме!";
+                    errEl.style.display = 'block';
+                    await signOut(auth);
+                    return;
                 }
-            }
-        }
-
-        function resetPin() {
-            state.inputPin = '';
-            updatePinDots();
-        }
-
-        function updatePinDots() {
-            const dots = document.querySelectorAll('.pin-dot');
-            dots.forEach((dot, idx) => {
-                if (idx < state.inputPin.length) {
-                    dot.classList.add('filled');
-                } else {
-                    dot.classList.remove('filled');
-                }
-            });
-        }
-
-        function verifyPin() {
-            const savedPin = localStorage.getItem('cine_pin_db');
-
-            if (!savedPin) {
-                localStorage.setItem('cine_pin_db', state.inputPin);
-                state.user = { id: Date.now() };
-                localStorage.setItem('cine_user', JSON.stringify(state.user));
-                alert('Профиль создан!');
                 authModal.classList.remove('active');
-                updateAuthUI();
-            } else if (savedPin === state.inputPin) {
-                state.user = { id: Date.now() };
-                localStorage.setItem('cine_user', JSON.stringify(state.user));
-                authModal.classList.remove('active');
-                updateAuthUI();
-            } else {
-                alert('Неверный ПИН-код!');
-                resetPin();
+                errEl.style.display = 'none';
+            } catch (err) {
+                errEl.textContent = "Ошибка входа: неверный Email или пароль!";
+                errEl.style.display = 'block';
             }
-        }
-
-        document.querySelectorAll('.num-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (btn.id === 'numClear') {
-                    resetPin();
-                } else if (btn.textContent) {
-                    handlePinInput(btn.textContent);
-                }
-            });
         });
 
-        // --- ГРАФИЧЕСКИЙ КЛЮЧ (CANVAS) ---
+        // Регистрация по Email (Firebase + Подтверждение)
+        document.getElementById('regForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const pass = document.getElementById('regPass').value;
+            const errEl = document.getElementById('regErrorMsg');
+
+            try {
+                const res = await createUserWithEmailAndPassword(auth, email, pass);
+                await updateProfile(res.user, { displayName: name });
+                await sendEmailVerification(res.user);
+
+                alert("Регистрация успешна! На ваш Email отправлено письмо. Подтвердите его перед входом.");
+                authModal.classList.remove('active');
+                errEl.style.display = 'none';
+            } catch (err) {
+                errEl.textContent = err.message;
+                errEl.style.display = 'block';
+            }
+        });
+
+        // Переключение между формами Email
+        document.getElementById('switchReg').addEventListener('click', () => {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('regForm').style.display = 'flex';
+        });
+
+        document.getElementById('switchLogin').addEventListener('click', () => {
+            document.getElementById('regForm').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'flex';
+        });
+
+        // Переключение вкладок Email / PIN / Pattern
+        document.getElementById('tabEmail').addEventListener('click', (e) => {
+            switchTab('emailBlock', e.target);
+        });
+
+        document.getElementById('tabPin').addEventListener('click', (e) => {
+            switchTab('pinBlock', e.target);
+        });
+
+        document.getElementById('tabPattern').addEventListener('click', (e) => {
+            switchTab('patternBlock', e.target);
+            initPatternNodes();
+        });
+
+        function switchTab(blockId, tabEl) {
+            document.getElementById('emailBlock').style.display = 'none';
+            document.getElementById('pinBlock').style.display = 'none';
+            document.getElementById('patternBlock').style.display = 'none';
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(blockId).style.display = blockId === 'patternBlock' ? 'flex' : 'block';
+            tabEl.classList.add('active');
+        }
+
+        // Графический ключ
         const canvas = document.getElementById('patternCanvas');
         const ctx = canvas.getContext('2d');
-        let isDrawing = false;
-        let patternNodes = [];
-        let drawnPath = [];
+        let isDrawing = false, patternNodes = [], drawnPath = [];
 
         function initPatternNodes() {
             patternNodes = [];
-            const size = canvas.width;
-            const step = size / 4;
-            
+            const step = canvas.width / 4;
             for (let i = 1; i <= 3; i++) {
                 for (let j = 1; j <= 3; j++) {
                     patternNodes.push({ id: (i-1)*3 + j, x: j * step, y: i * step });
@@ -791,8 +864,6 @@
 
         function drawPattern() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Соединительные линии
             if (drawnPath.length > 0) {
                 ctx.beginPath();
                 ctx.strokeStyle = '#ff2a5f';
@@ -803,89 +874,15 @@
                 });
                 ctx.stroke();
             }
-
-            // Узлы
             patternNodes.forEach(node => {
                 const isSelected = drawnPath.includes(node);
                 ctx.beginPath();
                 ctx.arc(node.x, node.y, isSelected ? 12 : 8, 0, Math.PI * 2);
                 ctx.fillStyle = isSelected ? '#ff2a5f' : '#222d42';
                 ctx.fill();
-                ctx.strokeStyle = isSelected ? '#fff' : '#1c2536';
-                ctx.lineWidth = 2;
-                ctx.stroke();
             });
         }
 
-        function getTouchPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
-        }
-
-        function handleStart(e) {
-            isDrawing = true;
-            drawnPath = [];
-            handleMove(e);
-        }
-
-        function handleMove(e) {
-            if (!isDrawing) return;
-            const pos = getTouchPos(e);
-            
-            patternNodes.forEach(node => {
-                const dist = Math.hypot(node.x - pos.x, node.y - pos.y);
-                if (dist < 20 && !drawnPath.includes(node)) {
-                    drawnPath.push(node);
-                }
-            });
-            drawPattern();
-        }
-
-        function handleEnd() {
-            if (!isDrawing) return;
-            isDrawing = false;
-            if (drawnPath.length > 0) {
-                const patternStr = drawnPath.map(n => n.id).join('-');
-                state.inputPin = patternStr;
-                verifyPin();
-                drawnPath = [];
-                drawPattern();
-            }
-        }
-
-        canvas.addEventListener('mousedown', handleStart);
-        canvas.addEventListener('mousemove', handleMove);
-        window.addEventListener('mouseup', handleEnd);
-
-        canvas.addEventListener('touchstart', handleStart);
-        canvas.addEventListener('touchmove', handleMove);
-        window.addEventListener('touchend', handleEnd);
-
-        // Вкладки аутентификации
-        document.getElementById('tabPin').addEventListener('click', (e) => {
-            state.authMode = 'pin';
-            document.getElementById('pinBlock').style.display = 'block';
-            document.getElementById('patternBlock').style.display = 'none';
-            e.target.classList.add('active');
-            document.getElementById('tabPattern').classList.remove('active');
-        });
-
-        document.getElementById('tabPattern').addEventListener('click', (e) => {
-            state.authMode = 'pattern';
-            document.getElementById('pinBlock').style.display = 'none';
-            document.getElementById('patternBlock').style.display = 'flex';
-            e.target.classList.add('active');
-            document.getElementById('tabPin').classList.remove('active');
-            initPatternNodes();
-        });
-
-        // Инициализация
-        updateAuthUI();
         renderMovies();
     </script>
 </body>
