@@ -8,10 +8,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- ЧИСТЫЙ HTML5 ПЛЕЕР (PLYR) -->
-  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-  <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
 
   <style>
     :root {
@@ -24,7 +20,6 @@
       --border-color: rgba(255, 255, 255, 0.1);
       --radius-md: 12px;
       --radius-lg: 20px;
-      --plyr-color-main: #e50914; /* Кастомный цвет твоего плеера */
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
@@ -73,10 +68,11 @@
     }
     .modal-close {
       position: absolute; top: 15px; right: 15px; background: rgba(0, 0, 0, 0.7); border: none;
-      color: #fff; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 101; font-size: 1.2rem;
+      color: #fff; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 100; font-size: 1.2rem;
     }
 
     .player-box { position: relative; width: 100%; min-height: 450px; background: #000; border-radius: var(--radius-lg) var(--radius-lg) 0 0; overflow: hidden; }
+    .player-box iframe { width: 100%; height: 100%; min-height: 450px; border: none; display: block; }
 
     .modal-details { padding: 20px; }
     .modal-title-text { font-size: 1.5rem; font-weight: 800; margin-bottom: 5px; }
@@ -85,7 +81,7 @@
       .header { flex-direction: column; align-items: stretch; }
       .container { padding-top: 140px; }
       .movies-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
-      .player-box { min-height: 280px; }
+      .player-box, .player-box iframe { min-height: 280px; }
     }
   </style>
 </head>
@@ -112,9 +108,7 @@
     <div class="modal-container">
       <button class="modal-close" id="modalCloseBtn"><i class="fa-solid fa-xmark"></i></button>
 
-      <div class="player-box">
-        <video id="myPlayer" playsinline controls></video>
-      </div>
+      <div class="player-box" id="playerBox"></div>
 
       <div class="modal-details">
         <h2 class="modal-title-text" id="modalTitle">Название фильма</h2>
@@ -124,12 +118,9 @@
   </div>
 
   <script>
-    const PROXY_WORKER_URL = 'https://my-proxy-worker.joni42581.workers.dev/';
     const API_KEY = '8c8e1a50-6322-4135-8875-5d40a5420d86';
     const API_URL_POPULAR = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/collections?type=TOP_POPULAR_MOVIES&page=1';
     const API_URL_SEARCH = 'https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=';
-
-    let plyrInstance = null;
 
     const moviesGrid = document.getElementById('moviesGrid');
     const searchForm = document.getElementById('searchForm');
@@ -137,14 +128,9 @@
     const sectionTitle = document.getElementById('sectionTitle');
     const videoModal = document.getElementById('videoModal');
     const modalCloseBtn = document.getElementById('modalCloseBtn');
-    const videoElement = document.getElementById('myPlayer');
+    const playerBox = document.getElementById('playerBox');
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Инициализируем наш собственный чистый HTML5 плеер
-      plyrInstance = new Plyr('#myPlayer', {
-        controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen']
-      });
-
       loadPopularMovies();
 
       searchForm.onsubmit = (e) => {
@@ -215,34 +201,20 @@
       });
     }
 
-    async function openPlayer(kpId, title, year) {
+    function openPlayer(kpId, title, year) {
       document.getElementById('modalTitle').textContent = title;
       document.getElementById('modalSub').textContent = `${year} • Смотреть онлайн`;
 
       videoModal.classList.add('active');
       document.body.style.overflow = 'hidden';
 
-      try {
-        // Запрашиваем чистый поток у нашего Worker
-        const res = await fetch(`${PROXY_WORKER_URL}?kp=${kpId}`);
-        const data = await res.json();
-
-        if (data.streamUrl) {
-          plyrInstance.source = {
-            type: 'video',
-            sources: [{ src: data.streamUrl, type: 'video/mp4' }]
-          };
-        } else {
-          alert('Видеопоток временно недоступен');
-        }
-      } catch (e) {
-        alert('Ошибка получения видеопотока');
-      }
+      // Прямой вызов оригинального плеера Alloha (без прокси и внешних скриптов)
+      playerBox.innerHTML = `<iframe src="https://api.allohatv.com/?token=4db52824254f69d32d0577f8045620&kp=${kpId}" allowfullscreen style="width:100%; height:100%; border:none;"></iframe>`;
     }
 
     function closeModal() {
       videoModal.classList.remove('active');
-      if (plyrInstance) plyrInstance.stop();
+      playerBox.innerHTML = '';
       document.body.style.overflow = 'auto';
     }
   </script>
