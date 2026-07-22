@@ -9,6 +9,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
+  <!-- Подключаем официальный скрипт мульти-балансера Kinobox -->
+  <script src="https://kinobox.in/kinobox.min.js"></script>
+
   <style>
     :root {
       --bg-primary: #0a0c10;
@@ -74,17 +77,8 @@
       color: #fff; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 100; font-size: 1.2rem;
     }
 
-    .player-controls {
-      display: flex; gap: 10px; padding: 10px 20px; background: #0f1218; border-bottom: 1px solid var(--border-color);
-    }
-    .source-btn {
-      padding: 6px 14px; background: var(--bg-card); border: 1px solid var(--border-color);
-      color: var(--text-main); border-radius: 6px; cursor: pointer; font-size: 0.85rem;
-    }
-    .source-btn.active { background: var(--accent); border-color: var(--accent); }
-
-    .player-wrapper { position: relative; padding-top: 56.25%; background: #000; }
-    .player-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+    /* Контейнер для Kinobox */
+    .kinobox-wrapper { width: 100%; min-height: 450px; background: #000; position: relative; }
 
     .modal-details { padding: 20px; }
     .modal-title-text { font-size: 1.6rem; font-weight: 800; margin-bottom: 5px; }
@@ -93,6 +87,7 @@
       .header { flex-direction: column; align-items: stretch; }
       .container { padding-top: 140px; }
       .movies-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+      .kinobox-wrapper { min-height: 250px; }
     }
   </style>
 </head>
@@ -119,15 +114,9 @@
     <div class="modal-container">
       <button class="modal-close" id="modalCloseBtn"><i class="fa-solid fa-xmark"></i></button>
 
-      <!-- Переключатель источников (если один сервер блокирует, выбираем другой) -->
-      <div class="player-controls">
-        <span style="font-size:0.85rem; color:var(--text-muted); align-self:center;">Сервер:</span>
-        <button class="source-btn active" onclick="switchServer(1)">Сервер 1 (Основной)</button>
-        <button class="source-btn" onclick="switchServer(2)">Сервер 2 (Запасной)</button>
-        <button class="source-btn" onclick="switchServer(3)">Сервер 3 (СНГ)</button>
-      </div>
+      <!-- Блок, куда Kinobox сам встраивает плеер с вкладками озвучек/качества -->
+      <div class="kinobox-wrapper kinobox_player"></div>
 
-      <div class="player-wrapper" id="playerWrapper"></div>
       <div class="modal-details">
         <h2 class="modal-title-text" id="modalTitle">Название фильма</h2>
         <p style="color: var(--text-muted); font-size: 0.9rem;" id="modalSub">Полная версия</p>
@@ -140,15 +129,13 @@
     const API_URL_POPULAR = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/collections?type=TOP_POPULAR_MOVIES&page=1';
     const API_URL_SEARCH = 'https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=';
 
-    let currentKpId = null;
-
     const moviesGrid = document.getElementById('moviesGrid');
     const searchForm = document.getElementById('searchForm');
     const searchInput = document.getElementById('searchInput');
     const sectionTitle = document.getElementById('sectionTitle');
     const videoModal = document.getElementById('videoModal');
     const modalCloseBtn = document.getElementById('modalCloseBtn');
-    const playerWrapper = document.getElementById('playerWrapper');
+    const kinoboxContainer = document.querySelector('.kinobox_player');
 
     document.addEventListener('DOMContentLoaded', () => {
       loadPopularMovies();
@@ -222,37 +209,37 @@
     }
 
     function openPlayer(kpId, title, year) {
-      currentKpId = kpId;
       document.getElementById('modalTitle').textContent = title;
       document.getElementById('modalSub').textContent = `${year} • Смотреть онлайн`;
 
-      switchServer(1);
-
       videoModal.classList.add('active');
       document.body.style.overflow = 'hidden';
-    }
 
-    // Переключение видеосерверов
-    function switchServer(serverNum) {
-      document.querySelectorAll('.source-btn').forEach((btn, idx) => {
-        btn.classList.toggle('active', idx + 1 === serverNum);
-      });
+      // Очищаем старый плеер перед запуском нового
+      kinoboxContainer.innerHTML = '';
 
-      let embedSrc = '';
-      if (serverNum === 1) {
-        embedSrc = `https://kinobox.in/kinobox.min.js?id=${currentKpId}`; 
-        // Универсальный бесплатный плеер Kinobox
-        playerWrapper.innerHTML = `<iframe src="https://voidboost.net/embed/${currentKpId}" allowfullscreen></iframe>`;
-      } else if (serverNum === 2) {
-        playerWrapper.innerHTML = `<iframe src="https://24750100.svetacdn.in/iP9A4v9z8A4x?kp=${currentKpId}" allowfullscreen></iframe>`;
-      } else if (serverNum === 3) {
-        playerWrapper.innerHTML = `<iframe src="https://vidsrc.cc/v2/embed/movie/${currentKpId}" allowfullscreen></iframe>`;
+      // Инициализация скрипта Kinobox (автоматически находит все доступные рабочие видеобазы)
+      if (window.kbox) {
+        kbox('.kinobox_player', {
+          search: { kinopoisk: kpId },
+          menu: {
+            enable: true,
+            default: 'players',
+            mobile: 'menu'
+          },
+          players: {
+            alloha: { enable: true },
+            kodik: { enable: true },
+            collaps: { enable: true },
+            vidsrc: { enable: true }
+          }
+        });
       }
     }
 
     function closeModal() {
       videoModal.classList.remove('active');
-      playerWrapper.innerHTML = '';
+      kinoboxContainer.innerHTML = ''; // Очищаем плеер при закрытии
       document.body.style.overflow = 'auto';
     }
   </script>
