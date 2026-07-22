@@ -82,7 +82,7 @@
     .server-btn:hover, .server-btn.active { background: var(--accent); border-color: var(--accent); }
 
     .player-box { position: relative; width: 100%; min-height: 480px; background: #000; }
-    .kinobox_player, .player-box iframe { width: 100%; height: 100%; min-height: 480px; border: none; display: block; }
+    .player-box iframe { width: 100%; height: 100%; min-height: 480px; border: none; display: block; }
 
     /* DEBUG LOGS PANEL */
     .debug-panel {
@@ -109,7 +109,7 @@
       .header { flex-direction: column; align-items: stretch; }
       .container { padding-top: 140px; }
       .movies-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
-      .player-box, .kinobox_player, .player-box iframe { min-height: 260px; }
+      .player-box, .player-box iframe { min-height: 260px; }
     }
   </style>
 </head>
@@ -136,18 +136,16 @@
     <div class="modal-container">
       <button class="modal-close" id="modalCloseBtn"><i class="fa-solid fa-xmark"></i></button>
 
-      <!-- ПАНЕЛЬ СЕРВЕРОВ -->
+      <!-- ПАНЕЛЬ СЕРВЕРОВ С АКТУАЛЬНЫМИ ЗЕРКАЛАМИ -->
       <div class="player-servers">
         <span style="font-size: 0.8rem; color: var(--text-muted);">Источник:</span>
-        <button class="server-btn active" onclick="switchServer(1)">Сервер 1 (Авто)</button>
-        <button class="server-btn" onclick="switchServer(2)">Сервер 2 (Voidboost)</button>
-        <button class="server-btn" onclick="switchServer(3)">Сервер 3 (Kinopoisk.cx)</button>
-        <button class="server-btn" onclick="switchServer(4)">Сервер 4 (Vidsrc)</button>
+        <button class="server-btn active" onclick="switchServer(1)">Сервер 1 (Collaps)</button>
+        <button class="server-btn" onclick="switchServer(2)">Сервер 2 (KinoDB)</button>
+        <button class="server-btn" onclick="switchServer(3)">Сервер 3 (AllPlex)</button>
+        <button class="server-btn" onclick="switchServer(4)">Сервер 4 (VidSrc PRO)</button>
       </div>
 
-      <div class="player-box" id="playerBox">
-        <div class="kinobox_player" id="kinoboxPlayer"></div>
-      </div>
+      <div class="player-box" id="playerBox"></div>
 
       <!-- ЛОГИ ОТЛАДКИ -->
       <div class="debug-panel">
@@ -185,19 +183,12 @@
     }
   </script>
 
-  <!-- Загружаем Kinobox CDN с отслеживанием -->
-  <script src="https://kinobox.in/kinobox.min.js" 
-          onload="log('Скрипт Kinobox загружен успешно'); window.kinoboxLoaded = true;" 
-          onerror="log('ОШИБКА: Kinobox CDN заблокирован блокировщиком/провайдером!', 'error'); window.kinoboxLoaded = false;">
-  </script>
-
   <script>
     const API_KEY = '8c8e1a50-6322-4135-8875-5d40a5420d86';
     const API_URL_POPULAR = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/collections?type=TOP_POPULAR_MOVIES&page=1';
     const API_URL_SEARCH = 'https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=';
 
     let activeKpId = null;
-    let fallbackTimer = null;
 
     const moviesGrid = document.getElementById('moviesGrid');
     const searchForm = document.getElementById('searchForm');
@@ -292,13 +283,11 @@
       videoModal.classList.add('active');
       document.body.style.overflow = 'hidden';
 
-      log(`--- Старт плеера | ID: ${kpId} | "${title}" ---`);
+      log(`--- Запуск фильма ID: ${kpId} ("${title}") ---`);
       switchServer(1);
     }
 
     function switchServer(serverNum) {
-      if (fallbackTimer) clearTimeout(fallbackTimer);
-
       document.querySelectorAll('.server-btn').forEach((btn, idx) => {
         btn.classList.toggle('active', idx + 1 === serverNum);
       });
@@ -306,51 +295,24 @@
       playerBox.innerHTML = '';
 
       if (serverNum === 1) {
-        log('Запуск Сервера 1 (Kinobox)...');
-        if (window.kbox && window.kinoboxLoaded !== false) {
-          playerBox.innerHTML = '<div class="kinobox_player" id="kinoboxPlayer"></div>';
-          try {
-            kbox('#kinoboxPlayer', {
-              search: { kinopoisk: activeKpId },
-              menu: { enable: true },
-              players: { alloha: { enable: true }, kodik: { enable: true }, collaps: { enable: true } }
-            });
-            log('Запрос в Kinobox отправлен.');
-
-            // Таймер: если через 2.5 сек в плеере пустой iframe или нет элементов, входим в аварийный режим
-            fallbackTimer = setTimeout(() => {
-              const kboxEl = document.getElementById('kinoboxPlayer');
-              if (!kboxEl || kboxEl.children.length === 0 || kboxEl.innerHTML === '') {
-                log('ВНИМАНИЕ: Сервер 1 не выдал ответ (чёрный экран). Переключаемся на Сервер 2...', 'warn');
-                switchServer(2);
-              }
-            }, 2500);
-
-          } catch (e) {
-            log('Ошибка запуска Kinobox: ' + e.message, 'error');
-            switchServer(2);
-          }
-        } else {
-          log('Kinobox недоступен. Автоматический переход на Сервер 2 (Voidboost)...', 'warn');
-          switchServer(2);
-        }
+        log('Подключение к Серверу 1 (Collaps API)...');
+        playerBox.innerHTML = `<iframe src="https://api.colls.cc/embed/kp/${activeKpId}" allowfullscreen></iframe>`;
       } 
       else if (serverNum === 2) {
-        log('Загрузка Сервера 2 (Voidboost iframe)...');
-        playerBox.innerHTML = `<iframe src="https://voidboost.net/embed/${activeKpId}" allowfullscreen></iframe>`;
+        log('Подключение к Серверу 2 (KinoDB)...');
+        playerBox.innerHTML = `<iframe src="https://kinodb.net/embed/${activeKpId}" allowfullscreen></iframe>`;
       } 
       else if (serverNum === 3) {
-        log('Загрузка Сервера 3 (Kinopoisk.cx iframe)...');
-        playerBox.innerHTML = `<iframe src="https://kinopoisk.cx/embed/${activeKpId}" allowfullscreen></iframe>`;
+        log('Подключение к Серверу 3 (AllPlex)...');
+        playerBox.innerHTML = `<iframe src="https://player.allplex.org/kp/${activeKpId}" allowfullscreen></iframe>`;
       }
       else if (serverNum === 4) {
-        log('Загрузка Сервера 4 (Vidsrc iframe)...');
-        playerBox.innerHTML = `<iframe src="https://vidsrc.me/embed/movie?kp=${activeKpId}" allowfullscreen></iframe>`;
+        log('Подключение к Серверу 4 (VidSrc Pro)...');
+        playerBox.innerHTML = `<iframe src="https://vidsrc.pro/embed/movie/${activeKpId}" allowfullscreen></iframe>`;
       }
     }
 
     function closeModal() {
-      if (fallbackTimer) clearTimeout(fallbackTimer);
       videoModal.classList.remove('active');
       playerBox.innerHTML = '';
       document.body.style.overflow = 'auto';
