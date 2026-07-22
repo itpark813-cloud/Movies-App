@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CinePulse — Фильмы и Сериалы</title>
+    <style>
+        :root {
+            --bg-main: #0a0d14;
+            --bg-card: #121824;
+            --bg-hover: #1c2536;
+            --accent: #ff2a5f;
+            --accent-glow: rgba(255, 42, 95, 0.35);
+            --text-primary: #f0f4f8;
+            --text-secondary: #8a99ad;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --radius-lg: 16px;
+            --radius-md: 10px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ШАПКА */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 90;
+            background: rgba(10, 13, 20, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
+        .user-nav {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: var(--bg-hover);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            border: none;
+            box-shadow: 0 4px 14px var(--accent-glow);
+        }
+
+        .btn-accent:hover {
+            background: #e02250;
+        }
+
+        /* ОСНОВНОЙ КОНТЕНТ */
+        main {
+            flex: 1;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 260px;
+        }
+
+        .search-box input {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 10px 16px;
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-box input:focus {
+            border-color: var(--accent);
+        }
+
+        .genres {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .chip {
+            padding: 6px 14px;
+            border-radius: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .chip.active, .chip:hover {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        /* СЕТКА ФИЛЬМОВ */
+        .movies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .movie-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        .poster-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 2 / 3;
+            background: #182030;
+        }
+
+        .poster-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .rating-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(10, 13, 20, 0.8);
+            backdrop-filter: blur(6px);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+
+        .movie-info {
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .movie-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            line-height: 1.3;
+            color: var(--text-primary);
+        }
+
+        .movie-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* МОДАЛЬНЫЕ ОКНА */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+            padding: 16px;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 440px;
+            padding: 28px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.4rem;
+            cursor: pointer;
+        }
+
+        /* АУТЕНТИФИКАЦИЯ: ГРАФИЧЕСКИЙ КЛЮЧ / ПИН */
+        .auth-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: var(--bg-main);
+            padding: 4px;
+            border-radius: var(--radius-md);
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 8px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .auth-tab.active {
+            background: var(--bg-card);
+            color: #fff;
+        }
+
+        .pin-display {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .pin-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            transition: 0.2s;
+        }
+
+        .pin-dot.filled {
+            background: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 260px;
+            margin: 0 auto;
+        }
+
+        .num-btn {
+            aspect-ratio: 1;
+            border-radius: 50%;
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.15s;
+        }
+
+        .num-btn:active {
+            background: var(--accent);
+        }
+
+        /* CANVAS ДЛЯ ГРАФИЧЕСКОГО КЛЮЧА */
+        .pattern-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        canvas#patternCanvas {
+            background: var(--bg-main);
+            border-radius: var(--radius-md);
+            touch-action: none;
+            cursor: pointer;
+        }
+
+        /* ДЕТАЛИ ФИЛЬМА */
+        .movie-detail-modal {
+            max-width: 700px;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .movie-detail-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .trailer-container {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #000;
+        }
+
+        .trailer-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .detail-body {
+            padding: 20px 24px;
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .detail-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+        }
+
+        .detail-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo" id="logoBtn">
+            🎬 Cine<span>Pulse</span>
+        </div>
+        <div class="user-nav">
+            <button class="btn" id="favBtn" style="display:none;">❤️ Избранное</button>
+            <button class="btn btn-accent" id="loginBtn">Войти в профиль</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Поиск фильма по названию...">
+            </div>
+            <div class="genres" id="genresContainer">
+                <div class="chip active" data-genre="all">Все</div>
+                <div class="chip" data-genre="Экшен">Экшен</div>
+                <div class="chip" data-genre="Фантастика">Фантастика</div>
+                <div class="chip" data-genre="Драма">Драма</div>
+                <div class="chip" data-genre="Триллер">Триллер</div>
+            </div>
+        </div>
+
+        <div class="movies-grid" id="moviesGrid"></div>
+    </main>
+
+    <!-- МОДАЛКА АУТЕНТИФИКАЦИИ -->
+    <div class="modal-overlay" id="authModal">
+        <div class="modal-card">
+            <button class="modal-close" class="closeAuth">&times;</button>
+            <h3 style="text-align: center; margin-bottom: 6px;" id="authTitle">Вход в аккаунт</h3>
+            <p style="text-align: center; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 16px;" id="authSubtitle">Введите Ваш ПИН-код</p>
+
+            <div class="auth-tabs">
+                <div class="auth-tab active" id="tabPin">PIN-код</div>
+                <div class="auth-tab" id="tabPattern">Графический ключ</div>
+            </div>
+
+            <!-- ВВОД ПИН -->
+            <div id="pinBlock">
+                <div class="pin-display">
+                    <div class="pin-dot"></div>
+                    <div class="pin-dot"></div>
+                    <div class="pin-dot"></div>
+                    <div class="pin-dot"></div>
+                </div>
+                <div class="numpad">
+                    <button class="num-btn">1</button>
+                    <button class="num-btn">2</button>
+                    <button class="num-btn">3</button>
+                    <button class="num-btn">4</button>
+                    <button class="num-btn">5</button>
+                    <button class="num-btn">6</button>
+                    <button class="num-btn">7</button>
+                    <button class="num-btn">8</button>
+                    <button class="num-btn">9</button>
+                    <button class="num-btn" style="visibility: hidden;"></button>
+                    <button class="num-btn">0</button>
+                    <button class="num-btn" id="numClear">⌫</button>
+                </div>
+            </div>
+
+            <!-- ВВОД ГРАФИЧЕСКОГО КЛЮЧА -->
+            <div id="patternBlock" class="pattern-container" style="display: none;">
+                <canvas id="patternCanvas" width="240" height="240"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛКА ДЕТАЛЕЙ ФИЛЬМА -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal-card movie-detail-modal">
+            <button class="modal-close" id="closeDetail">&times;</button>
+            <div class="movie-detail-content">
+                <div class="trailer-container" id="trailerBox"></div>
+                <div class="detail-body">
+                    <div class="detail-header">
+                        <div>
+                            <h2 class="detail-title" id="mTitle">Название фильма</h2>
+                            <span class="movie-meta" id="mMeta">2023 • Жанр</span>
+                        </div>
+                        <button class="btn" id="toggleFavBtn">❤️ В избранное</button>
+                    </div>
+                    <p class="detail-desc" id="mDesc">Описание...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- ДАННЫЕ ФИЛЬМОВ ---
+        const MOVIES_DATA = [
+            {
+                id: 1,
+                title: "Дюна: Часть вторая",
+                genre: "Фантастика",
+                year: 2024,
+                rating: 8.6,
+                poster: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&q=80",
+                trailer: "https://www.youtube.com/embed/Way9Dexny3w",
+                desc: "Пол Атрейдес объединяется с Чани и фременами, возглавляя месть против заговорщиков, уничтоживших его семью."
+            },
+            {
+                id: 2,
+                title: "Темный рыцарь",
+                genre: "Экшен",
+                year: 2008,
+                rating: 9.0,
+                poster: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500&q=80",
+                trailer: "https://www.youtube.com/embed/EXeTwQWrcwY",
+                desc: "Бэтмен поднимает ставки в войне с криминалом. С помощью лейтенанта Джима Гордона и прокурора Харви Дента он намерен очистить улицы Готэма."
+            },
+            {
+                id: 3,
+                title: "Интерстеллар",
+                genre: "Фантастика",
+                year: 2014,
+                rating: 8.7,
+                poster: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=500&q=80",
+                trailer: "https://www.youtube.com/embed/zSWdZVtXT7E",
+                desc: "Наше время на Земле подходит к концу. Команда исследователей берет на себя самую важную миссию в истории человечества."
+            },
+            {
+                id: 4,
+                title: "Бегущий по лезвию 2049",
+                genre: "Фантастика",
+                year: 2017,
+                rating: 8.0,
+                poster: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=500&q=80",
+                trailer: "https://www.youtube.com/embed/gCcx85zbxz4",
+                desc: "Офицер К раскрывает давнюю тайну, которая может погрузить остатки общества в хаос."
+            },
+            {
+                id: 5,
+                title: "Оппенгеймер",
+                genre: "Драма",
+                year: 2023,
+                rating: 8.9,
+                poster: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=500&q=80",
+                trailer: "https://www.youtube.com/embed/uYPbbksJxIg",
+                desc: "История жизни американского физика Роберта Оппенгеймера, который стоял во главе первых разработок ядерного оружия."
+            }
+        ];
+
+        // --- СОСТОЯНИЕ ПРИЛОЖЕНИЯ ---
+        let state = {
+            user: JSON.parse(localStorage.getItem('cine_user')) || null,
+            favorites: JSON.parse(localStorage.getItem('cine_favs')) || [],
+            currentFilter: 'all',
+            searchQuery: '',
+            selectedMovie: null,
+            inputPin: '',
+            authMode: 'pin' // 'pin' или 'pattern'
+        };
+
+        // --- DOM ЭЛЕМЕНТЫ ---
+        const grid = document.getElementById('moviesGrid');
+        const searchInput = document.getElementById('searchInput');
+        const genresContainer = document.getElementById('genresContainer');
+        const loginBtn = document.getElementById('loginBtn');
+        const favBtn = document.getElementById('favBtn');
+        const authModal = document.getElementById('authModal');
+        const detailModal = document.getElementById('detailModal');
+
+        // --- РЕНДЕР КАРТОЧЕК ---
+        function renderMovies() {
+            grid.innerHTML = '';
+            
+            const filtered = MOVIES_DATA.filter(movie => {
+                const matchGenre = state.currentFilter === 'all' || movie.genre === state.currentFilter;
+                const matchSearch = movie.title.toLowerCase().includes(state.searchQuery.toLowerCase());
+                return matchGenre && matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 40px;">Фильмы не найдены</div>`;
+                return;
+            }
+
+            filtered.forEach(movie => {
+                const card = document.createElement('div');
+                card.className = 'movie-card';
+                card.innerHTML = `
+                    <div class="poster-wrapper">
+                        <img src="${movie.poster}" alt="${movie.title}" loading="lazy">
+                        <div class="rating-badge">★ ${movie.rating}</div>
+                    </div>
+                    <div class="movie-info">
+                        <div class="movie-title">${movie.title}</div>
+                        <div class="movie-meta">${movie.year} • ${movie.genre}</div>
+                    </div>
+                `;
+                card.addEventListener('click', () => openMovieDetail(movie));
+                grid.appendChild(card);
+            });
+        }
+
+        // --- ДЕТАЛИ ФИЛЬМА ---
+        function openMovieDetail(movie) {
+            state.selectedMovie = movie;
+            document.getElementById('mTitle').textContent = movie.title;
+            document.getElementById('mMeta').textContent = `${movie.year} • ${movie.genre} • ★ ${movie.rating}`;
+            document.getElementById('mDesc').textContent = movie.desc;
+            document.getElementById('trailerBox').innerHTML = `<iframe src="${movie.trailer}?autoplay=0" allowfullscreen></iframe>`;
+            
+            updateFavButtonUI();
+            detailModal.classList.add('active');
+        }
+
+        function updateFavButtonUI() {
+            const toggleBtn = document.getElementById('toggleFavBtn');
+            if (!state.selectedMovie) return;
+
+            const isFav = state.favorites.includes(state.selectedMovie.id);
+            toggleBtn.textContent = isFav ? '❤️ В избранном' : '🤍 В избранное';
+            toggleBtn.style.borderColor = isFav ? 'var(--accent)' : 'var(--border-color)';
+        }
+
+        document.getElementById('toggleFavBtn').addEventListener('click', () => {
+            if (!state.user) {
+                alert('Пожалуйста, войдите в профиль, чтобы сохранять фильмы!');
+                return;
+            }
+
+            const id = state.selectedMovie.id;
+            const idx = state.favorites.indexOf(id);
+
+            if (idx > -1) {
+                state.favorites.splice(idx, 1);
+            } else {
+                state.favorites.push(id);
+            }
+
+            localStorage.setItem('cine_favs', JSON.stringify(state.favorites));
+            updateFavButtonUI();
+        });
+
+        document.getElementById('closeDetail').addEventListener('click', () => {
+            detailModal.classList.remove('active');
+            document.getElementById('trailerBox').innerHTML = '';
+        });
+
+        // --- ПОИСК И ФИЛЬТРЫ ---
+        searchInput.addEventListener('input', (e) => {
+            state.searchQuery = e.target.value;
+            renderMovies();
+        });
+
+        genresContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('chip')) {
+                document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+                e.target.classList.add('active');
+                state.currentFilter = e.target.dataset.genre;
+                renderMovies();
+            }
+        });
+
+        // --- УПРАВЛЕНИЕ СЕССИЕЙ ПОЛЬЗОВАТЕЛЯ ---
+        function updateAuthUI() {
+            if (state.user) {
+                loginBtn.textContent = 'Выйти';
+                loginBtn.classList.remove('btn-accent');
+                favBtn.style.display = 'inline-flex';
+            } else {
+                loginBtn.textContent = 'Войти в профиль';
+                loginBtn.classList.add('btn-accent');
+                favBtn.style.display = 'none';
+            }
+        }
+
+        loginBtn.addEventListener('click', () => {
+            if (state.user) {
+                state.user = null;
+                localStorage.removeItem('cine_user');
+                updateAuthUI();
+            } else {
+                openAuthModal();
+            }
+        });
+
+        function openAuthModal() {
+            const hasUser = !!localStorage.getItem('cine_pin_db');
+            document.getElementById('authTitle').textContent = hasUser ? 'Вход в аккаунт' : 'Создание профиля';
+            document.getElementById('authSubtitle').textContent = hasUser ? 'Введите сохраненный ключ' : 'Задайте новый ПИН (4 цифры)';
+            authModal.classList.add('active');
+            resetPin();
+        }
+
+        document.querySelector('.modal-close').addEventListener('click', () => {
+            authModal.classList.remove('active');
+        });
+
+        // --- ПИН-КОД ЛОГИКА ---
+        function handlePinInput(digit) {
+            if (state.inputPin.length < 4) {
+                state.inputPin += digit;
+                updatePinDots();
+                if (state.inputPin.length === 4) {
+                    setTimeout(verifyPin, 150);
+                }
+            }
+        }
+
+        function resetPin() {
+            state.inputPin = '';
+            updatePinDots();
+        }
+
+        function updatePinDots() {
+            const dots = document.querySelectorAll('.pin-dot');
+            dots.forEach((dot, idx) => {
+                if (idx < state.inputPin.length) {
+                    dot.classList.add('filled');
+                } else {
+                    dot.classList.remove('filled');
+                }
+            });
+        }
+
+        function verifyPin() {
+            const savedPin = localStorage.getItem('cine_pin_db');
+
+            if (!savedPin) {
+                localStorage.setItem('cine_pin_db', state.inputPin);
+                state.user = { id: Date.now() };
+                localStorage.setItem('cine_user', JSON.stringify(state.user));
+                alert('Профиль создан!');
+                authModal.classList.remove('active');
+                updateAuthUI();
+            } else if (savedPin === state.inputPin) {
+                state.user = { id: Date.now() };
+                localStorage.setItem('cine_user', JSON.stringify(state.user));
+                authModal.classList.remove('active');
+                updateAuthUI();
+            } else {
+                alert('Неверный ПИН-код!');
+                resetPin();
+            }
+        }
+
+        document.querySelectorAll('.num-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.id === 'numClear') {
+                    resetPin();
+                } else if (btn.textContent) {
+                    handlePinInput(btn.textContent);
+                }
+            });
+        });
+
+        // --- ГРАФИЧЕСКИЙ КЛЮЧ (CANVAS) ---
+        const canvas = document.getElementById('patternCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let patternNodes = [];
+        let drawnPath = [];
+
+        function initPatternNodes() {
+            patternNodes = [];
+            const size = canvas.width;
+            const step = size / 4;
+            
+            for (let i = 1; i <= 3; i++) {
+                for (let j = 1; j <= 3; j++) {
+                    patternNodes.push({ id: (i-1)*3 + j, x: j * step, y: i * step });
+                }
+            }
+            drawPattern();
+        }
+
+        function drawPattern() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Соединительные линии
+            if (drawnPath.length > 0) {
+                ctx.beginPath();
+                ctx.strokeStyle = '#ff2a5f';
+                ctx.lineWidth = 4;
+                drawnPath.forEach((node, idx) => {
+                    if (idx === 0) ctx.moveTo(node.x, node.y);
+                    else ctx.lineTo(node.x, node.y);
+                });
+                ctx.stroke();
+            }
+
+            // Узлы
+            patternNodes.forEach(node => {
+                const isSelected = drawnPath.includes(node);
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, isSelected ? 12 : 8, 0, Math.PI * 2);
+                ctx.fillStyle = isSelected ? '#ff2a5f' : '#222d42';
+                ctx.fill();
+                ctx.strokeStyle = isSelected ? '#fff' : '#1c2536';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
+        }
+
+        function getTouchPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function handleStart(e) {
+            isDrawing = true;
+            drawnPath = [];
+            handleMove(e);
+        }
+
+        function handleMove(e) {
+            if (!isDrawing) return;
+            const pos = getTouchPos(e);
+            
+            patternNodes.forEach(node => {
+                const dist = Math.hypot(node.x - pos.x, node.y - pos.y);
+                if (dist < 20 && !drawnPath.includes(node)) {
+                    drawnPath.push(node);
+                }
+            });
+            drawPattern();
+        }
+
+        function handleEnd() {
+            if (!isDrawing) return;
+            isDrawing = false;
+            if (drawnPath.length > 0) {
+                const patternStr = drawnPath.map(n => n.id).join('-');
+                state.inputPin = patternStr;
+                verifyPin();
+                drawnPath = [];
+                drawPattern();
+            }
+        }
+
+        canvas.addEventListener('mousedown', handleStart);
+        canvas.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleEnd);
+
+        canvas.addEventListener('touchstart', handleStart);
+        canvas.addEventListener('touchmove', handleMove);
+        window.addEventListener('touchend', handleEnd);
+
+        // Вкладки аутентификации
+        document.getElementById('tabPin').addEventListener('click', (e) => {
+            state.authMode = 'pin';
+            document.getElementById('pinBlock').style.display = 'block';
+            document.getElementById('patternBlock').style.display = 'none';
+            e.target.classList.add('active');
+            document.getElementById('tabPattern').classList.remove('active');
+        });
+
+        document.getElementById('tabPattern').addEventListener('click', (e) => {
+            state.authMode = 'pattern';
+            document.getElementById('pinBlock').style.display = 'none';
+            document.getElementById('patternBlock').style.display = 'flex';
+            e.target.classList.add('active');
+            document.getElementById('tabPin').classList.remove('active');
+            initPatternNodes();
+        });
+
+        // Инициализация
+        updateAuthUI();
+        renderMovies();
+    </script>
+</body>
+</html>
