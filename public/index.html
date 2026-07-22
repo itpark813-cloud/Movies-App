@@ -100,7 +100,6 @@
       max-height: 120px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;
     }
     .log-err { color: #ef4444; }
-    .log-warn { color: #f59e0b; }
 
     .modal-details { padding: 20px; }
     .modal-title-text { font-size: 1.6rem; font-weight: 800; margin-bottom: 5px; }
@@ -136,13 +135,12 @@
     <div class="modal-container">
       <button class="modal-close" id="modalCloseBtn"><i class="fa-solid fa-xmark"></i></button>
 
-      <!-- ПАНЕЛЬ СЕРВЕРОВ С АКТУАЛЬНЫМИ ЗЕРКАЛАМИ -->
+      <!-- ПАНЕЛЬ СЕРВЕРОВ БЕЗ БЛОКИРОВОК -->
       <div class="player-servers">
-        <span style="font-size: 0.8rem; color: var(--text-muted);">Источник:</span>
-        <button class="server-btn active" onclick="switchServer(1)">Сервер 1 (Collaps)</button>
-        <button class="server-btn" onclick="switchServer(2)">Сервер 2 (KinoDB)</button>
-        <button class="server-btn" onclick="switchServer(3)">Сервер 3 (AllPlex)</button>
-        <button class="server-btn" onclick="switchServer(4)">Сервер 4 (VidSrc PRO)</button>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Сервер:</span>
+        <button class="server-btn active" onclick="switchServer(1)">Сервер 1 (Основной)</button>
+        <button class="server-btn" onclick="switchServer(2)">Сервер 2 (Обходной)</button>
+        <button class="server-btn" onclick="switchServer(3)">Сервер 3 (Запасной)</button>
       </div>
 
       <div class="player-box" id="playerBox"></div>
@@ -150,10 +148,10 @@
       <!-- ЛОГИ ОТЛАДКИ -->
       <div class="debug-panel">
         <div class="debug-header">
-          <span class="debug-title"><i class="fa-solid fa-terminal"></i> Лог плеера:</span>
-          <button class="copy-btn" onclick="copyLogs()"><i class="fa-solid fa-copy"></i> Скопировать логи</button>
+          <span class="debug-title"><i class="fa-solid fa-terminal"></i> Лог подключения:</span>
+          <button class="copy-btn" onclick="copyLogs()"><i class="fa-solid fa-copy"></i> Скопировать</button>
         </div>
-        <div class="debug-logs" id="debugLogs">Инициализация...</div>
+        <div class="debug-logs" id="debugLogs">Готов к работе</div>
       </div>
 
       <div class="modal-details">
@@ -168,17 +166,13 @@
       const logsEl = document.getElementById('debugLogs');
       if (!logsEl) return;
       const time = new Date().toLocaleTimeString();
-      let cls = '';
-      if (type === 'error') cls = 'class="log-err"';
-      if (type === 'warn') cls = 'class="log-warn"';
-      
+      let cls = type === 'error' ? 'class="log-err"' : '';
       logsEl.innerHTML += `<div ${cls}>[${time}] ${msg}</div>`;
       logsEl.scrollTop = logsEl.scrollHeight;
     }
 
     function copyLogs() {
-      const logsText = document.getElementById('debugLogs').innerText;
-      navigator.clipboard.writeText(logsText);
+      navigator.clipboard.writeText(document.getElementById('debugLogs').innerText);
       alert('Логи скопированы!');
     }
   </script>
@@ -199,7 +193,6 @@
     const playerBox = document.getElementById('playerBox');
 
     document.addEventListener('DOMContentLoaded', () => {
-      log('Сайт запущен на хосте: ' + window.location.hostname);
       loadPopularMovies();
 
       searchForm.onsubmit = (e) => {
@@ -213,24 +206,21 @@
     });
 
     async function loadPopularMovies() {
-      log('Запрос каталога фильмов...');
       try {
         const res = await fetch(API_URL_POPULAR, {
           headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' }
         });
         const data = await res.json();
-        log('Загружено фильмов: ' + (data.items ? data.items.length : 0));
         renderMovies(data.items || []);
       } catch (err) {
         log('Ошибка Кинопоиск API: ' + err.message, 'error');
-        moviesGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Ошибка загрузки. Попробуйте поиск.</p>`;
+        moviesGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Ошибка загрузки каталога</p>`;
       }
     }
 
     async function searchMovies(query) {
       sectionTitle.innerHTML = `<i class="fa-solid fa-magnifying-glass"></i> Поиск: "${query}"`;
-      moviesGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Ищем в базе...</p>`;
-      log('Ищем: ' + query);
+      moviesGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Ищем...</p>`;
 
       try {
         const res = await fetch(API_URL_SEARCH + encodeURIComponent(query), {
@@ -283,7 +273,7 @@
       videoModal.classList.add('active');
       document.body.style.overflow = 'hidden';
 
-      log(`--- Запуск фильма ID: ${kpId} ("${title}") ---`);
+      log(`--- Запуск ID: ${kpId} ("${title}") ---`);
       switchServer(1);
     }
 
@@ -295,20 +285,16 @@
       playerBox.innerHTML = '';
 
       if (serverNum === 1) {
-        log('Подключение к Серверу 1 (Collaps API)...');
-        playerBox.innerHTML = `<iframe src="https://api.colls.cc/embed/kp/${activeKpId}" allowfullscreen></iframe>`;
+        log('Загрузка Сервера 1 (Lumex Embed)...');
+        playerBox.innerHTML = `<iframe src="https://lumex.host/embed/${activeKpId}" allowfullscreen></iframe>`;
       } 
       else if (serverNum === 2) {
-        log('Подключение к Серверу 2 (KinoDB)...');
-        playerBox.innerHTML = `<iframe src="https://kinodb.net/embed/${activeKpId}" allowfullscreen></iframe>`;
+        log('Загрузка Сервера 2 (KinoKrad Cloud)...');
+        playerBox.innerHTML = `<iframe src="https://kinokrad.cc/embed/${activeKpId}" allowfullscreen></iframe>`;
       } 
       else if (serverNum === 3) {
-        log('Подключение к Серверу 3 (AllPlex)...');
-        playerBox.innerHTML = `<iframe src="https://player.allplex.org/kp/${activeKpId}" allowfullscreen></iframe>`;
-      }
-      else if (serverNum === 4) {
-        log('Подключение к Серверу 4 (VidSrc Pro)...');
-        playerBox.innerHTML = `<iframe src="https://vidsrc.pro/embed/movie/${activeKpId}" allowfullscreen></iframe>`;
+        log('Загрузка Сервера 3 (VidSrc CDN)...');
+        playerBox.innerHTML = `<iframe src="https://vidsrc.cc/v2/embed/movie/${activeKpId}" allowfullscreen></iframe>`;
       }
     }
 
@@ -316,7 +302,6 @@
       videoModal.classList.remove('active');
       playerBox.innerHTML = '';
       document.body.style.overflow = 'auto';
-      log('Плеер закрыт.');
     }
   </script>
 </body>
