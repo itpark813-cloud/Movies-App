@@ -74,6 +74,15 @@
       color: #fff; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 100; font-size: 1.2rem;
     }
 
+    .player-controls {
+      display: flex; gap: 10px; padding: 10px 20px; background: #0f1218; border-bottom: 1px solid var(--border-color);
+    }
+    .source-btn {
+      padding: 6px 14px; background: var(--bg-card); border: 1px solid var(--border-color);
+      color: var(--text-main); border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+    }
+    .source-btn.active { background: var(--accent); border-color: var(--accent); }
+
     .player-wrapper { position: relative; padding-top: 56.25%; background: #000; }
     .player-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
 
@@ -95,7 +104,7 @@
     </a>
     <form class="search-form" id="searchForm">
       <i class="fa-solid fa-magnifying-glass"></i>
-      <input type="text" id="searchInput" placeholder="Напишите название любого фильма мира...">
+      <input type="text" id="searchInput" placeholder="Напишите название фильма...">
     </form>
   </header>
 
@@ -109,6 +118,15 @@
   <div class="modal" id="videoModal">
     <div class="modal-container">
       <button class="modal-close" id="modalCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+
+      <!-- Переключатель источников (если один сервер блокирует, выбираем другой) -->
+      <div class="player-controls">
+        <span style="font-size:0.85rem; color:var(--text-muted); align-self:center;">Сервер:</span>
+        <button class="source-btn active" onclick="switchServer(1)">Сервер 1 (Основной)</button>
+        <button class="source-btn" onclick="switchServer(2)">Сервер 2 (Запасной)</button>
+        <button class="source-btn" onclick="switchServer(3)">Сервер 3 (СНГ)</button>
+      </div>
+
       <div class="player-wrapper" id="playerWrapper"></div>
       <div class="modal-details">
         <h2 class="modal-title-text" id="modalTitle">Название фильма</h2>
@@ -118,10 +136,11 @@
   </div>
 
   <script>
-    // Публичный API Кинопоиска для поиска постеров и информации
     const API_KEY = '8c8e1a50-6322-4135-8875-5d40a5420d86';
     const API_URL_POPULAR = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/collections?type=TOP_POPULAR_MOVIES&page=1';
     const API_URL_SEARCH = 'https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=';
+
+    let currentKpId = null;
 
     const moviesGrid = document.getElementById('moviesGrid');
     const searchForm = document.getElementById('searchForm');
@@ -144,7 +163,6 @@
       videoModal.onclick = (e) => { if (e.target === videoModal) closeModal(); };
     });
 
-    // Популярные фильмы
     async function loadPopularMovies() {
       try {
         const res = await fetch(API_URL_POPULAR, {
@@ -153,11 +171,10 @@
         const data = await res.json();
         renderMovies(data.items || []);
       } catch (err) {
-        moviesGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Ошибка загрузки. Попробуйте поискать через поисковую строку.</p>`;
+        moviesGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Ошибка загрузки. Попробуйте поиск.</p>`;
       }
     }
 
-    // Поиск любого фильма по названию
     async function searchMovies(query) {
       sectionTitle.innerHTML = `<i class="fa-solid fa-magnifying-glass"></i> Результаты поиска: "${query}"`;
       moviesGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Ищем в базе...</p>`;
@@ -204,21 +221,33 @@
       });
     }
 
-    // Открывает плеер с баз фильмов по ID
     function openPlayer(kpId, title, year) {
+      currentKpId = kpId;
       document.getElementById('modalTitle').textContent = title;
-      document.getElementById('modalSub').textContent = `${year} • Смотреть онлайн в HD`;
+      document.getElementById('modalSub').textContent = `${year} • Смотреть онлайн`;
 
-      // Генератор мульти-балансера (автоматом находит плеер с фильмом)
-      playerWrapper.innerHTML = `
-        <iframe 
-          src="https://vidsrc.to/embed/movie/${kpId}" 
-          allowfullscreen>
-        </iframe>
-      `;
+      switchServer(1);
 
       videoModal.classList.add('active');
       document.body.style.overflow = 'hidden';
+    }
+
+    // Переключение видеосерверов
+    function switchServer(serverNum) {
+      document.querySelectorAll('.source-btn').forEach((btn, idx) => {
+        btn.classList.toggle('active', idx + 1 === serverNum);
+      });
+
+      let embedSrc = '';
+      if (serverNum === 1) {
+        embedSrc = `https://kinobox.in/kinobox.min.js?id=${currentKpId}`; 
+        // Универсальный бесплатный плеер Kinobox
+        playerWrapper.innerHTML = `<iframe src="https://voidboost.net/embed/${currentKpId}" allowfullscreen></iframe>`;
+      } else if (serverNum === 2) {
+        playerWrapper.innerHTML = `<iframe src="https://24750100.svetacdn.in/iP9A4v9z8A4x?kp=${currentKpId}" allowfullscreen></iframe>`;
+      } else if (serverNum === 3) {
+        playerWrapper.innerHTML = `<iframe src="https://vidsrc.cc/v2/embed/movie/${currentKpId}" allowfullscreen></iframe>`;
+      }
     }
 
     function closeModal() {
