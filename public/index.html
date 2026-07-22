@@ -1,1 +1,831 @@
 
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SevimliKino — Онлайн Кинотеатр</title>
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --bg-primary: #0a0c10;
+      --bg-secondary: #141820;
+      --bg-card: #1c2230;
+      --accent: #e50914;
+      --accent-hover: #ff1e27;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --border-color: rgba(255, 255, 255, 0.1);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --shadow-main: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* HEADER / NAVBAR */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      background: linear-gradient(180deg, rgba(10,12,16,0.95) 0%, rgba(10,12,16,0.7) 70%, rgba(10,12,16,0) 100%);
+      backdrop-filter: blur(12px);
+      padding: 18px 4%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.3s ease;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #fff;
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-logo span {
+      color: var(--accent);
+    }
+
+    .search-box {
+      position: relative;
+      width: 320px;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 10px 16px 10px 42px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      border-radius: 30px;
+      color: #fff;
+      font-size: 0.9rem;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    .search-box input:focus {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: var(--accent);
+      box-shadow: 0 0 15px rgba(229, 9, 20, 0.3);
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
+
+    /* HERO BANNER */
+    .hero-banner {
+      position: relative;
+      height: 75vh;
+      min-height: 500px;
+      display: flex;
+      align-items: flex-end;
+      padding: 0 4% 60px;
+      background-size: cover;
+      background-position: center;
+      transition: background-image 0.5s ease-in-out;
+    }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(10,12,16,0.3) 0%, rgba(10,12,16,0.8) 70%, var(--bg-primary) 100%),
+                  linear-gradient(90deg, rgba(10,12,16,0.9) 0%, rgba(10,12,16,0.2) 100%);
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 650px;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border-radius: 4px;
+      text-transform: uppercase;
+      margin-bottom: 15px;
+    }
+
+    .hero-title {
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 15px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    .hero-meta {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 15px;
+    }
+
+    .rating-star {
+      color: #f5c518;
+    }
+
+    .hero-description {
+      font-size: 1rem;
+      color: #d1d5db;
+      margin-bottom: 25px;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 15px;
+    }
+
+    .btn {
+      padding: 12px 28px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: 1rem;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background-color: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--accent-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(229, 9, 20, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+    }
+
+    /* FILTERS & CATEGORIES */
+    .container {
+      padding: 0 4% 60px;
+    }
+
+    .category-bar {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      margin: 30px 0;
+      scrollbar-width: none;
+    }
+
+    .category-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .cat-btn {
+      padding: 8px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .cat-btn.active, .cat-btn:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* MOVIE GRID */
+    .movies-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 20px;
+    }
+
+    .movie-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .movie-card:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-main);
+    }
+
+    .card-thumb {
+      position: relative;
+      width: 100%;
+      padding-top: 145%; /* Aspect Ratio 2:3 */
+      overflow: hidden;
+    }
+
+    .card-thumb img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+
+    .movie-card:hover .card-thumb img {
+      transform: scale(1.08);
+    }
+
+    .card-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(5px);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #f5c518;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .card-info {
+      padding: 12px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+
+    .card-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* MODAL PLAYER */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(15px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      padding: 20px;
+    }
+
+    .modal.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-container {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 960px;
+      max-height: 90vh;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .modal-close:hover {
+      background: var(--accent);
+    }
+
+    .player-wrapper {
+      position: relative;
+      padding-top: 56.25%; /* 16:9 Aspect Ratio */
+      background: #000;
+      border-top-left-radius: var(--radius-lg);
+      border-top-right-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .player-wrapper iframe, .player-wrapper video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .modal-details {
+      padding: 25px;
+    }
+
+    .modal-header-flex {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .modal-title-text {
+      font-size: 1.8rem;
+      font-weight: 800;
+    }
+
+    .video-toggle-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    .toggle-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .toggle-btn.active {
+      background: var(--accent);
+    }
+
+    .modal-desc-text {
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border-color);
+      padding: 40px 4%;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* MOBILE RESPONSIVE */
+    @media (max-width: 768px) {
+      .search-box { width: 180px; }
+      .hero-title { font-size: 2rem; }
+      .hero-banner { height: 60vh; }
+      .movies-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+      .btn { padding: 10px 18px; font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <a href="#" class="brand-logo">
+      <i class="fa-solid fa-play-circle" style="color: var(--accent)"></i> Sevimli<span>Kino</span>
+    </a>
+    <div class="search-box">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="searchInput" placeholder="Поиск фильмов и жанров...">
+    </div>
+  </header>
+
+  <!-- HERO SECTION -->
+  <section class="hero-banner" id="heroBanner">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <span class="hero-badge" id="heroBadge">Премьера</span>
+      <h1 class="hero-title" id="heroTitle">Загрузка...</h1>
+      <div class="hero-meta">
+        <span><i class="fa-solid fa-star rating-star"></i> <span id="heroRating">0.0</span></span>
+        <span id="heroYear">2026</span>
+        <span id="heroGenre">Фантастика</span>
+      </div>
+      <p class="hero-description" id="heroDesc">Загрузка информации о фильме...</p>
+      <div class="btn-group">
+        <button class="btn btn-primary" id="heroPlayBtn"><i class="fa-solid fa-play"></i> Смотреть онлайн</button>
+        <button class="btn btn-secondary" id="heroFavBtn"><i class="fa-regular fa-bookmark"></i> В избранное</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN CONTENT -->
+  <div class="container">
+    <!-- CATEGORIES -->
+    <div class="category-bar" id="categoryBar">
+      <button class="cat-btn active" data-genre="all">Все фильмы</button>
+      <button class="cat-btn" data-genre="Экшен">Экшен</button>
+      <button class="cat-btn" data-genre="Фантастика">Фантастика</button>
+      <button class="cat-btn" data-genre="Мультфильм">Мультфильмы</button>
+      <button class="cat-btn" data-genre="Драма">Драма</button>
+      <button class="cat-btn" data-genre="Комедия">Комедия</button>
+      <button class="cat-btn" data-genre="fav">Избранное</button>
+    </div>
+
+    <!-- MOVIES SECTION -->
+    <div class="section-title">
+      <span id="sectionHeader">Каталог фильмов</span>
+    </div>
+    <div class="movies-grid" id="moviesGrid">
+      <!-- Динамически заполняется через JS -->
+    </div>
+  </div>
+
+  <!-- VIDEO MODAL PLAYER -->
+  <div class="modal" id="videoModal">
+    <div class="modal-container">
+      <button class="modal-close" id="modalCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+      <div class="player-wrapper" id="playerWrapper">
+        <!-- Видеоплеер генерируется скриптом -->
+      </div>
+      <div class="modal-details">
+        <div class="modal-header-flex">
+          <div>
+            <h2 class="modal-title-text" id="modalTitle">Название фильма</h2>
+            <div class="hero-meta" style="margin-top: 5px;">
+              <span><i class="fa-solid fa-star rating-star"></i> <span id="modalRating">8.5</span></span>
+              <span id="modalYear">2026</span>
+              <span id="modalGenre">Экшен</span>
+            </div>
+          </div>
+          <div class="video-toggle-btns">
+            <button class="toggle-btn active" id="btnFullMovie">Фильм</button>
+            <button class="toggle-btn" id="btnTrailer">Трейлер</button>
+          </div>
+        </div>
+        <p class="modal-desc-text" id="modalDesc">Описание фильма...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>&copy; 2026 SevimliKino. Все права защищены. Смотрите любимое кино без ограничений.</p>
+  </footer>
+
+  <script>
+    // БАЗА ДАННЫХ ФИЛЬМОВ С РЕАЛЬНЫМИ РАБОЧИМИ ВИДЕОПОТОКАМИ (HTML5 / HLS / Embed)
+    const MOVIES_DATABASE = [
+      {
+        id: "m1",
+        title: "Синтел: Затерянный мир",
+        genre: "Фантастика",
+        year: 2024,
+        rating: 8.9,
+        badge: "Топ 1",
+        poster: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=800&auto=format&fit=crop",
+        banner: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1600&auto=format&fit=crop",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+        trailerUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        description: "Отважная героиня отправляется в опасное путешествие через ледяные пустоши и гигантские горы, чтобы отыскать и спасти своего маленького дракона."
+      },
+      {
+        id: "m2",
+        title: "Стальные Слёзы 2088",
+        genre: "Экшен",
+        year: 2025,
+        rating: 9.1,
+        badge: "Премьера",
+        poster: "https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=800&auto=format&fit=crop",
+        banner: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=1600&auto=format&fit=crop",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+        trailerUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+        description: "В футуристическом Амстердаме группа ученых и солдат использует древние технологии времени, чтобы предотвратить апокалипсис роботов."
+      },
+      {
+        id: "m3",
+        title: "Большой Кролик",
+        genre: "Мультфильм",
+        year: 2023,
+        rating: 8.7,
+        badge: "Семейное",
+        poster: "https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=800&auto=format&fit=crop",
+        banner: "https://images.unsplash.com/photo-1535016120720-40c646be5580?q=80&w=1600&auto=format&fit=crop",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+        trailerUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+        description: "Добродушный и гигантский лесной кролик решается дать отпор банде задиристых лесных зверьков, нарушивших его покой."
+      },
+      {
+        id: "m4",
+        title: "Космическая Прачечная",
+        genre: "Фантастика",
+        year: 2024,
+        rating: 8.4,
+        badge: "Популярное",
+        poster: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800&auto=format&fit=crop",
+        banner: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=1600&auto=format&fit=crop",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+        trailerUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4",
+        description: "Депрессивная овца по имени Франк встречает инопланетного торговца, который предлагает ей путешествие по удивительным параллельным мирам."
+      },
+      {
+        id: "m5",
+        title: "Скорость и Горизонт",
+        genre: "Экшен",
+        year: 2026,
+        rating: 8.8,
+        badge: "Новинка",
+        poster: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?q=80&w=800&auto=format&fit=crop",
+        banner: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=1600&auto=format&fit=crop",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
+        trailerUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutback2012.mp4",
+        description: "Захватывающие гонки по неисследованным трассам, где на кону стоит не только чемпионский кубок, но и свобода героев."
+      },
+      {
+        id: "m6",
+        title: "Путь Исследователя",
+        genre: "Драма",
+        year: 2025,
+        rating: 9.3,
+        badge: "Выбор редакции",
+        poster: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop",
+        banner: "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?q=80&w=1600&auto=format&fit=crop",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+        trailerUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        description: "Вдохновляющая история одиночного восхождения на самую неприступную вершину мира с неповторимыми пейзажами."
+      }
+    ];
+
+    // STATE MANAGEMENT
+    let activeGenre = 'all';
+    let activeMovie = MOVIES_DATABASE[0];
+    let favorites = JSON.parse(localStorage.getItem('sevimli_favs') || '[]');
+
+    // DOM ELEMENTS
+    const moviesGrid = document.getElementById('moviesGrid');
+    const heroBanner = document.getElementById('heroBanner');
+    const heroTitle = document.getElementById('heroTitle');
+    const heroBadge = document.getElementById('heroBadge');
+    const heroRating = document.getElementById('heroRating');
+    const heroYear = document.getElementById('heroYear');
+    const heroGenre = document.getElementById('heroGenre');
+    const heroDesc = document.getElementById('heroDesc');
+    const heroPlayBtn = document.getElementById('heroPlayBtn');
+    const heroFavBtn = document.getElementById('heroFavBtn');
+    const videoModal = document.getElementById('videoModal');
+    const modalCloseBtn = document.getElementById('modalCloseBtn');
+    const playerWrapper = document.getElementById('playerWrapper');
+    const searchInput = document.getElementById('searchInput');
+    const categoryBar = document.getElementById('categoryBar');
+
+    // INITIALIZATION
+    document.addEventListener('DOMContentLoaded', () => {
+      setHeroMovie(MOVIES_DATABASE[0]);
+      renderMovies(MOVIES_DATABASE);
+      setupEventListeners();
+    });
+
+    // RENDER MOVIES GRID
+    function renderMovies(movies) {
+      moviesGrid.innerHTML = '';
+      if (movies.length === 0) {
+        moviesGrid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px 0;">Ничего не найдено</p>`;
+        return;
+      }
+
+      movies.forEach(movie => {
+        const card = document.createElement('div');
+        card.className = 'movie-card';
+        card.innerHTML = `
+          <div class="card-thumb">
+            <img src="${movie.poster}" alt="${movie.title}" loading="lazy">
+            <span class="card-badge"><i class="fa-solid fa-star"></i> ${movie.rating}</span>
+          </div>
+          <div class="card-info">
+            <div class="card-title">${movie.title}</div>
+            <div class="card-sub">${movie.year} • ${movie.genre}</div>
+          </div>
+        `;
+        card.addEventListener('click', () => openMoviePlayer(movie));
+        moviesGrid.appendChild(card);
+      });
+    }
+
+    // SET HERO MOVIE
+    function setHeroMovie(movie) {
+      activeMovie = movie;
+      heroBanner.style.backgroundImage = `url('${movie.banner}')`;
+      heroTitle.textContent = movie.title;
+      heroBadge.textContent = movie.badge;
+      heroRating.textContent = movie.rating;
+      heroYear.textContent = movie.year;
+      heroGenre.textContent = movie.genre;
+      heroDesc.textContent = movie.description;
+      updateFavBtnUI();
+    }
+
+    // OPEN PLAYER MODAL
+    function openMoviePlayer(movie, isTrailer = false) {
+      document.getElementById('modalTitle').textContent = movie.title;
+      document.getElementById('modalRating').textContent = movie.rating;
+      document.getElementById('modalYear').textContent = movie.year;
+      document.getElementById('modalGenre').textContent = movie.genre;
+      document.getElementById('modalDesc').textContent = movie.description;
+
+      const url = isTrailer ? movie.trailerUrl : movie.videoUrl;
+      
+      // Рендерим Видеоплеер HTML5
+      playerWrapper.innerHTML = `
+        <video controls autoplay style="width: 100%; height: 100%; object-fit: contain;">
+          <source src="${url}" type="video/mp4">
+          Ваш браузер не поддерживает воспроизведение видео.
+        </video>
+      `;
+
+      videoModal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+
+      // Настройка кнопок Переключения Фильм / Трейлер
+      const btnFull = document.getElementById('btnFullMovie');
+      const btnTrailer = document.getElementById('btnTrailer');
+      
+      btnFull.onclick = () => {
+        btnFull.classList.add('active');
+        btnTrailer.classList.remove('active');
+        openMoviePlayer(movie, false);
+      };
+      
+      btnTrailer.onclick = () => {
+        btnTrailer.classList.add('active');
+        btnFull.classList.remove('active');
+        openMoviePlayer(movie, true);
+      };
+    }
+
+    // CLOSE MODAL
+    function closeModal() {
+      videoModal.classList.remove('active');
+      playerWrapper.innerHTML = ''; // Останавливаем воспроизведение
+      document.body.style.overflow = 'auto';
+    }
+
+    // FAVORITES SYSTEM
+    function toggleFavorite(movie) {
+      const index = favorites.indexOf(movie.id);
+      if (index === -1) {
+        favorites.push(movie.id);
+      } else {
+        favorites.splice(index, 1);
+      }
+      localStorage.setItem('sevimli_favs', JSON.stringify(favorites));
+      updateFavBtnUI();
+      
+      if (activeGenre === 'fav') {
+        filterMovies();
+      }
+    }
+
+    function updateFavBtnUI() {
+      const isFav = favorites.includes(activeMovie.id);
+      heroFavBtn.innerHTML = isFav 
+        ? `<i class="fa-solid fa-bookmark" style="color: var(--accent)"></i> В избранном`
+        : `<i class="fa-regular fa-bookmark"></i> В избранное`;
+    }
+
+    // FILTER MOVIES
+    function filterMovies() {
+      const query = searchInput.value.toLowerCase().trim();
+      let filtered = MOVIES_DATABASE;
+
+      if (activeGenre === 'fav') {
+        filtered = filtered.filter(m => favorites.includes(m.id));
+      } else if (activeGenre !== 'all') {
+        filtered = filtered.filter(m => m.genre === activeGenre);
+      }
+
+      if (query !== '') {
+        filtered = filtered.filter(m => 
+          m.title.toLowerCase().includes(query) || 
+          m.genre.toLowerCase().includes(query)
+        );
+      }
+
+      renderMovies(filtered);
+    }
+
+    // EVENT LISTENERS
+    function setupEventListeners() {
+      heroPlayBtn.addEventListener('click', () => openMoviePlayer(activeMovie));
+      heroFavBtn.addEventListener('click', () => toggleFavorite(activeMovie));
+      modalCloseBtn.addEventListener('click', closeModal);
+
+      videoModal.addEventListener('click', (e) => {
+        if (e.target === videoModal) closeModal();
+      });
+
+      categoryBar.addEventListener('click', (e) => {
+        if (e.target.classList.contains('cat-btn')) {
+          document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+          e.target.classList.add('active');
+          activeGenre = e.target.dataset.genre;
+          filterMovies();
+        }
+      });
+
+      searchInput.addEventListener('input', filterMovies);
+    }
+  </script>
+</body>
+</html>
+ 
