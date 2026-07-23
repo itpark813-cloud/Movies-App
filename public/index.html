@@ -78,14 +78,6 @@
     .modal-title-text { font-size: 1.5rem; font-weight: 800; margin-bottom: 5px; }
     .empty-state { grid-column: 1 / -1; color: var(--text-muted); text-align: center; padding: 30px 0; }
 
-    .server-tabs { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-    .server-tab {
-      background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-color);
-      color: var(--text-muted); padding: 8px 16px; border-radius: 8px; cursor: pointer;
-      font-size: 0.85rem; font-weight: 600; transition: all 0.2s ease;
-    }
-    .server-tab.active, .server-tab:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
-
     @media (max-width: 768px) {
       .header { flex-direction: column; align-items: stretch; }
       .container { padding-top: 140px; }
@@ -125,10 +117,6 @@
       </div>
 
       <div class="modal-details">
-        <div class="server-tabs" id="serverTabs">
-          <button class="server-tab active" data-server="collaps">Сервер 1 (Collaps)</button>
-          <button class="server-tab" data-server="videocdn">Сервер 2 (VideoCDN)</button>
-        </div>
         <h2 class="modal-title-text" id="modalTitle">Название фильма</h2>
         <p style="color: var(--text-muted); font-size: 0.9rem;" id="modalSub">Смотреть онлайн</p>
       </div>
@@ -140,7 +128,6 @@
     const API_URL_POPULAR = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/collections?type=TOP_POPULAR_MOVIES&page=1';
     const API_URL_SEARCH = 'https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=';
 
-    let currentKpId = null;
     const moviesGrid = document.getElementById('moviesGrid');
     const searchForm = document.getElementById('searchForm');
     const searchInput = document.getElementById('searchInput');
@@ -150,7 +137,6 @@
     const playerBox = document.getElementById('playerBox');
     const modalTitle = document.getElementById('modalTitle');
     const modalSub = document.getElementById('modalSub');
-    const serverBtns = document.querySelectorAll('.server-tab');
 
     document.addEventListener('DOMContentLoaded', () => {
       loadPopularMovies();
@@ -165,14 +151,6 @@
       modalCloseBtn.addEventListener('click', closeModal);
       videoModal.addEventListener('click', (e) => { if (e.target === videoModal) closeModal(); });
       document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
-
-      serverBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          serverBtns.forEach(b => b.classList.remove('active'));
-          e.target.classList.add('active');
-          loadServer(e.target.dataset.server);
-        });
-      });
     });
 
     async function loadPopularMovies() {
@@ -229,29 +207,13 @@
     }
 
     function openPlayer(kpId, title, year) {
-      currentKpId = kpId;
       modalTitle.textContent = title;
       modalSub.textContent = `${year} • Смотреть онлайн`;
       videoModal.classList.add('active');
       document.body.style.overflow = 'hidden';
 
-      serverBtns.forEach(b => b.classList.remove('active'));
-      serverBtns[0].classList.add('active');
-      loadServer('collaps');
-    }
-
-    function loadServer(serverName) {
-      if (!currentKpId) return;
-      let iframeUrl = '';
-
-      if (serverName === 'collaps') {
-        // Исправленный правильный путь для Collaps
-        iframeUrl = `https://api.bhcesh.me/embed/kp/${currentKpId}`;
-      } else if (serverName === 'videocdn') {
-        // Резервный сервер VideoCDN
-        iframeUrl = `https://78.svetacdn.in/jB5l/movie?kinopoisk_id=${currentKpId}`;
-      }
-
+      // Надежный плеер Kinoplayer, который сам агрегирует работающие потоки
+      const iframeUrl = `https://kinoplayer.top/player/?kp=${kpId}`;
       playerBox.innerHTML = `<iframe src="${iframeUrl}" allowfullscreen allow="autoplay" loading="lazy"></iframe>`;
     }
 
