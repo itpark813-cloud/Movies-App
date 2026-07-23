@@ -221,7 +221,7 @@
     .btn-google:hover { background: #e6e6e6; }
     .btn-google svg { width: 18px; height: 18px; }
 
-    .auth-error { color: #f87171; font-size: 0.85rem; text-align: center; display: none; margin-bottom: 15px; }
+    .auth-error { color: #f87171; font-size: 0.85rem; text-align: center; display: none; margin-bottom: 12px; }
 
     /* Уведомление Toasts */
     .toast-msg {
@@ -256,7 +256,7 @@
       <div class="user-profile-badge" id="userBadge" style="display: none;">
         <div class="user-avatar" id="userInitial">U</div>
         <span class="user-name" id="userNameDisplay">Пользователь</span>
-        <button class="btn-logout" id="logoutBtn" title="Выйти"><i class="fa-solid fa-right-from-bracket"></i></button>
+        <button class="btn-logout" id="logoutBtn" title="Выйти из аккаунта"><i class="fa-solid fa-right-from-bracket"></i></button>
       </div>
     </div>
   </header>
@@ -376,7 +376,7 @@
     <div class="auth-card">
       <button class="close-modal" id="closeAuthBtn"><i class="fa-solid fa-xmark"></i></button>
       
-      <div class="auth-tabs">
+      <div class="auth-tabs" id="authTabsHeader">
         <div class="auth-tab active" id="tabLoginBtn">Войти</div>
         <div class="auth-tab" id="tabRegisterBtn">Регистрация</div>
       </div>
@@ -417,6 +417,22 @@
         <button type="submit" class="btn-submit">Зарегистрироваться</button>
       </form>
 
+      <!-- ФОРМА ПРОВЕРКИ / СОЗДАНИЯ ПАРОЛЯ ПОСЛЕ ВЫБОРА GOOGLE -->
+      <form class="auth-form" id="googlePasswordForm">
+        <p style="font-size: 0.9rem; color: var(--text-muted); text-align: center;" id="googleStepTitle">
+          Подтвердите ваш пароль от аккаунта
+        </p>
+        <div class="input-group">
+          <label>Пароль</label>
+          <input type="password" id="googlePasswordInput" placeholder="••••••••" required />
+        </div>
+        <div class="input-group" id="googleConfirmGroup" style="display: none;">
+          <label>Подтвердите пароль</label>
+          <input type="password" id="googleConfirmPasswordInput" placeholder="••••••••" />
+        </div>
+        <button type="submit" class="btn-submit" id="googleStepSubmitBtn">Завершить вход</button>
+      </form>
+
       <div id="googleAuthSection">
         <div class="auth-divider">или</div>
         <button class="btn-google" id="googleLoginBtn">
@@ -429,7 +445,7 @@
 
   <div class="toast-msg" id="toastMsg"></div>
 
-  <!-- Firebase SDK (v10) и скрипт приложения -->
+  <!-- Firebase SDK (v10) и основной JS -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { 
@@ -514,7 +530,7 @@
     const watchDesc = document.getElementById('watchDesc');
     const trailerBtn = document.getElementById('trailerBtn');
 
-    // Элементы Авторизации
+    // Авторизация
     const openAuthBtn = document.getElementById('openAuthBtn');
     const closeAuthBtn = document.getElementById('closeAuthBtn');
     const authModal = document.getElementById('authModal');
@@ -527,14 +543,17 @@
     const tabRegisterBtn = document.getElementById('tabRegisterBtn');
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
+    const googlePasswordForm = document.getElementById('googlePasswordForm');
+    const googleAuthSection = document.getElementById('googleAuthSection');
     const authErrorMsg = document.getElementById('authErrorMsg');
 
-    // Переменные состояния
+    // Состояния
     let isFullMoviePlaying = false;
     let pendingResumeTime = 0;
     let currentUser = null;
+    let tempGoogleUser = null;
+    let isNewGoogleUser = false;
 
-    // Web Audio Context для высокого уровня громкости (усиление до 200%)
     let audioCtx = null;
     let gainNode = null;
 
@@ -570,7 +589,6 @@
       logoBtn.addEventListener('click', showHomePage);
       backBtn.addEventListener('click', showHomePage);
 
-      // События плеера
       playPauseBtn.addEventListener('click', togglePlay);
       videoElem.addEventListener('click', togglePlay);
       videoElem.addEventListener('timeupdate', updateProgress);
@@ -579,7 +597,6 @@
       volumeSlider.addEventListener('input', handleVolumeChange);
       fullscreenBtn.addEventListener('click', toggleFullscreen);
 
-      // Меню скорости и яркости
       speedBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         brightMenu.classList.remove('active');
@@ -605,7 +622,6 @@
 
       brightSlider.addEventListener('input', updateVideoFilters);
 
-      // Проверка авторизации при нажатии HD ULTRA
       qualityEnhanceBtn.addEventListener('click', () => {
         if (!currentUser) {
           showToast("Войдите в аккаунт, чтобы воспользоваться этой функцией!");
@@ -621,7 +637,6 @@
         brightMenu.classList.remove('active');
       });
 
-      // Кнопки возобновления
       resumeYesBtn.addEventListener('click', () => {
         resumeModal.style.display = 'none';
         videoElem.currentTime = pendingResumeTime;
@@ -637,7 +652,7 @@
         playIcon.className = 'fa-solid fa-pause';
       });
 
-      // Модалка авторизации и кнопки
+      // События модалки
       openAuthBtn.addEventListener('click', openAuthModal);
       closeAuthBtn.addEventListener('click', closeAuthModal);
       logoutBtn.addEventListener('click', handleLogout);
@@ -647,39 +662,24 @@
 
       loginForm.addEventListener('submit', handleLoginSubmit);
       registerForm.addEventListener('submit', handleRegisterSubmit);
+      googlePasswordForm.addEventListener('submit', handleGooglePasswordSubmit);
       document.getElementById('googleLoginBtn').addEventListener('click', handleGoogleAuth);
 
       document.addEventListener('keydown', handleKeyPress);
     });
 
-    /* --- СЛУШАТЕЛЬ СОСТОЯНИЯ FIREBASE AUTH --- */
+    /* --- СЛУШАТЕЛЬ СЕССИИ FIREBASE AUTH --- */
     function initFirebaseAuthListener() {
       onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          currentUser = user;
-          const displayName = user.displayName || user.email.split('@')[0];
+        if (user && currentUser) {
+          // Активный пользователь в нашей системе
+          const displayName = currentUser.displayName || user.email.split('@')[0];
           userNameDisplay.textContent = displayName;
           userInitial.textContent = displayName[0].toUpperCase();
 
           openAuthBtn.style.display = 'none';
           userBadge.style.display = 'flex';
           closeAuthModal();
-
-          // Сохранение/обновление пользователя в Firestore
-          try {
-            const userDocRef = doc(db, "users", user.uid);
-            const userDoc = await getDoc(userDocRef);
-            if (!userDoc.exists()) {
-              await setDoc(userDocRef, {
-                uid: user.uid,
-                email: user.email,
-                displayName: displayName,
-                createdAt: new Date().toISOString()
-              });
-            }
-          } catch(err) {
-            console.log("Firestore note:", err);
-          }
         } else {
           currentUser = null;
           userBadge.style.display = 'none';
@@ -690,17 +690,27 @@
       });
     }
 
-    /* --- ФУНКЦИИ ВХОДА И РЕГИСТРАЦИИ (FIREBASE) --- */
+    /* --- ОБЫЧНЫЙ ВХОД И РЕГИСТРАЦИЯ --- */
     async function handleLoginSubmit(e) {
       e.preventDefault();
       const email = document.getElementById('loginEmailInput').value.trim();
       const pass = document.getElementById('loginPasswordInput').value;
 
       try {
-        await signInWithEmailAndPassword(auth, email, pass);
+        const userCred = await signInWithEmailAndPassword(auth, email, pass);
+        // Получаем имя из Firestore
+        const docSnap = await getDoc(doc(db, "users", userCred.user.uid));
+        let displayName = userCred.user.displayName;
+        if (docSnap.exists() && docSnap.data().displayName) {
+          displayName = docSnap.data().displayName;
+        }
+
+        currentUser = { ...userCred.user, displayName };
         showToast("Успешный вход!");
+        closeAuthModal();
+        initFirebaseAuthListener();
       } catch (err) {
-        showAuthError(getFirebaseErrorMessage(err.code));
+        showAuthError("Неверный Email или пароль!");
       }
     }
 
@@ -725,27 +735,119 @@
         const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
         await updateProfile(userCredential.user, { displayName: login });
         
+        // Сохраняем в Firestore
         await setDoc(doc(db, "users", userCredential.user.uid), {
           uid: userCredential.user.uid,
           displayName: login,
           email: email,
+          password: pass,
           createdAt: new Date().toISOString()
         });
 
+        currentUser = { ...userCredential.user, displayName: login };
         showToast("Регистрация успешна!");
+        closeAuthModal();
+        initFirebaseAuthListener();
       } catch (err) {
-        showAuthError(getFirebaseErrorMessage(err.code));
+        if (err.code === 'auth/email-already-in-use') {
+          showAuthError("Пользователь с таким Email уже существует!");
+        } else {
+          showAuthError("Ошибка регистрации. Проверьте данные.");
+        }
       }
     }
 
+    /* --- ЛОГИКА GOOGLE АВТОРИЗАЦИИ С ПРОВЕРКОЙ/СОЗДАНИЕМ ПАРОЛЯ --- */
     async function handleGoogleAuth() {
       authErrorMsg.style.display = 'none';
+
       try {
-        await signInWithPopup(auth, googleProvider);
-        showToast("Успешный вход через Google!");
+        const result = await signInWithPopup(auth, googleProvider);
+        const gUser = result.user;
+        
+        tempGoogleUser = {
+          uid: gUser.uid,
+          email: gUser.email,
+          displayName: gUser.displayName || gUser.email.split('@')[0]
+        };
+
+        // Проверяем наличие аккаунта в базе Firestore по UID
+        const userDocRef = doc(db, "users", gUser.uid);
+        const docSnap = await getDoc(userDocRef);
+
+        loginForm.classList.remove('active');
+        registerForm.classList.remove('active');
+        googleAuthSection.style.display = 'none';
+        document.getElementById('authTabsHeader').style.display = 'none';
+        googlePasswordForm.classList.add('active');
+
+        if (docSnap.exists() && docSnap.data().password) {
+          // АККАУНТ УЖЕ ЕСТЬ В БАЗЕ -> Запрашиваем существующий пароль
+          isNewGoogleUser = false;
+          tempGoogleUser.savedPassword = docSnap.data().password;
+          document.getElementById('googleStepTitle').textContent = `Аккаунт найден (${tempGoogleUser.email}). Введите пароль:`;
+          document.getElementById('googleConfirmGroup').style.display = 'none';
+          document.getElementById('googleStepSubmitBtn').textContent = "Войти в аккаунт";
+        } else {
+          // АККАУНТА НЕТ В БАЗЕ -> Создаем новый пароль и подтверждаем его
+          isNewGoogleUser = true;
+          document.getElementById('googleStepTitle').textContent = `Завершение регистрации (${tempGoogleUser.email}). Создайте пароль:`;
+          document.getElementById('googleConfirmGroup').style.display = 'flex';
+          document.getElementById('googleStepSubmitBtn').textContent = "Зарегистрировать аккаунт";
+        }
+
       } catch (err) {
         if (err.code !== 'auth/popup-closed-by-user') {
-          showAuthError(getFirebaseErrorMessage(err.code));
+          showAuthError("Ошибка входа через Google");
+        }
+      }
+    }
+
+    async function handleGooglePasswordSubmit(e) {
+      e.preventDefault();
+      const pass = document.getElementById('googlePasswordInput').value;
+      const confirmPass = document.getElementById('googleConfirmPasswordInput').value;
+
+      if (!tempGoogleUser) return;
+
+      if (isNewGoogleUser) {
+        // Проверка при создании пароля
+        if (pass !== confirmPass) {
+          showAuthError("Пароли не совпадают!");
+          return;
+        }
+        if (pass.length < 6) {
+          showAuthError("Пароль должен быть минимум 6 символов!");
+          return;
+        }
+
+        // Сохраняем в Firestore только после валидации
+        try {
+          await setDoc(doc(db, "users", tempGoogleUser.uid), {
+            uid: tempGoogleUser.uid,
+            displayName: tempGoogleUser.displayName,
+            email: tempGoogleUser.email,
+            password: pass,
+            createdAt: new Date().toISOString()
+          });
+
+          currentUser = tempGoogleUser;
+          showToast("Аккаунт успешно создан!");
+          closeAuthModal();
+          initFirebaseAuthListener();
+        } catch (err) {
+          showAuthError("Ошибка сохранения данных.");
+        }
+
+      } else {
+        // Проверка пароля существуюшего аккаунта
+        if (pass === tempGoogleUser.savedPassword) {
+          currentUser = tempGoogleUser;
+          showToast("Добро пожаловать!");
+          closeAuthModal();
+          initFirebaseAuthListener();
+        } else {
+          showAuthError("Неверный пароль аккаунта!");
         }
       }
     }
@@ -754,46 +856,39 @@
     async function handleLogout() {
       try {
         await signOut(auth);
+        currentUser = null;
+        userBadge.style.display = 'none';
+        openAuthBtn.style.display = 'flex';
+        qualityEnhanceBtn.classList.remove('active');
+        updateVideoFilters();
         showToast("Вы успешно вышли из аккаунта");
       } catch (err) {
         showToast("Ошибка при выходе из аккаунта");
       }
     }
 
-    function getFirebaseErrorMessage(code) {
-      switch (code) {
-        case 'auth/invalid-email':
-          return 'Некорректный формат Email.';
-        case 'auth/user-disabled':
-          return 'Этот аккаунт заблокирован.';
-        case 'auth/user-not-found':
-        case 'auth/wrong-password':
-        case 'auth/invalid-credential':
-          return 'Неверный Email или пароль.';
-        case 'auth/email-already-in-use':
-          return 'Пользователь с таким Email уже существует.';
-        case 'auth/weak-password':
-          return 'Пароль слишком простой (минимум 6 символов).';
-        case 'auth/popup-closed-by-user':
-          return 'Окно авторизации было закрыто.';
-        default:
-          return 'Ошибка авторизации. Проверьте данные и повторите попытку.';
-      }
-    }
-
-    /* --- УПРАВЛЕНИЕ МОДАЛЬНЫМ ОКНОМ --- */
+    /* --- МОДАЛЬНОЕ ОКНО И ПЕРЕКЛЮЧЕНИЕ ТАБОВ --- */
     function openAuthModal() {
       authModal.classList.add('active');
       authErrorMsg.style.display = 'none';
+      document.getElementById('authTabsHeader').style.display = 'flex';
+      googleAuthSection.style.display = 'block';
+      googlePasswordForm.classList.remove('active');
       switchAuthTab('login');
     }
 
     function closeAuthModal() {
       authModal.classList.remove('active');
+      tempGoogleUser = null;
+      document.getElementById('googlePasswordInput').value = '';
+      document.getElementById('googleConfirmPasswordInput').value = '';
     }
 
     function switchAuthTab(tab) {
       authErrorMsg.style.display = 'none';
+      googlePasswordForm.classList.remove('active');
+      googleAuthSection.style.display = 'block';
+
       if (tab === 'login') {
         tabLoginBtn.classList.add('active');
         tabRegisterBtn.classList.remove('active');
@@ -819,7 +914,7 @@
       setTimeout(() => { toast.style.display = 'none'; }, 3500);
     }
 
-    /* --- ФИЛЬТРЫ И ЗВУК ПЛЕЕРА --- */
+    /* --- ПЛЕЕР И КИНЕМАТОГРАФ --- */
     function updateVideoFilters() {
       const brightness = brightSlider.value;
       const isHd = qualityEnhanceBtn.classList.contains('active');
@@ -851,7 +946,6 @@
       updateVolumeIcon();
     }
 
-    /* --- ПОИСК И ПЛЕЕР --- */
     async function loadSpidermanFromApi() {
       try {
         const res = await fetch(API_SEARCH_URL + encodeURIComponent('Новый Человек-паук'), {
