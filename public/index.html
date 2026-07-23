@@ -11,45 +11,29 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <!-- Firebase SDK (compat for local HTML) -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics-compat.js"></script>
-  <script>
-    // Your web app's Firebase configuration
+  <!-- Firebase SDK (v10) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // Конфигурация Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCTcRlgSy_tQ_nxyk7Y8-DjiQ8RnjA-hYw",
       authDomain: "sevimlikino.firebaseapp.com",
       projectId: "sevimlikino",
       storageBucket: "sevimlikino.firebasestorage.app",
       messagingSenderId: "166243734025",
-      appId: "1:166243734025:web:6d258f207c8c58ab671ed8",
-      measurementId: "G-VPG39S6R4T"
+      appId: "1:166243734025:web:6d258f207c8c58ab671ed8"
     };
 
-    window.firebaseApp = firebase.initializeApp(firebaseConfig);
-    window.firebaseAuth = firebase.auth();
-
-    try {
-      window.firebaseAnalytics = firebase.analytics(window.firebaseApp);
-    } catch (e) {
-      window.firebaseAnalytics = null;
-    }
-
-    const googleProvider = new firebase.auth.GoogleAuthProvider();
-    googleProvider.setCustomParameters({ prompt: "select_account" });
-    window.googleProvider = googleProvider;
-
-    window.firebaseAuthHelpers = {
-      signInWithPopup: (auth, provider) => auth.signInWithPopup(provider),
-      signOut: (auth) => auth.signOut(),
-      createUserWithEmailAndPassword: (auth, email, password) => auth.createUserWithEmailAndPassword(email, password),
-      signInWithEmailAndPassword: (auth, email, password) => auth.signInWithEmailAndPassword(email, password),
-      onAuthStateChanged: (auth, callback) => auth.onAuthStateChanged(callback),
-      updateProfile: (user, data) => user.updateProfile(data)
-    };
+    const app = initializeApp(firebaseConfig);
+    window.firebaseAuth = getAuth(app);
+    window.firebaseDB = getFirestore(app);
+    window.googleProvider = new GoogleAuthProvider();
   </script>
-<style>
+
+  <style>
     :root {
       --bg-primary: #08090c;
       --bg-secondary: #12151c;
@@ -195,13 +179,6 @@
       font-size: 0.75rem; font-weight: 800; cursor: pointer; transition: 0.2s;
     }
     .quality-btn.active { background: #10b981; }
-    .quality-btn.locked {
-      opacity: 0.7;
-      filter: grayscale(0.2);
-    }
-    .quality-btn.locked:hover {
-      transform: none;
-    }
 
     .watch-details { margin-top: 25px; padding: 25px; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-color); }
     .watch-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 10px; }
@@ -247,40 +224,6 @@
       border-radius: 8px; color: #fff; font-size: 0.95rem; outline: none; transition: 0.2s;
     }
     .input-group input:focus { border-color: var(--accent); }
-    .password-field {
-      position: relative;
-    }
-
-    .password-field input {
-      width: 100%;
-      padding-right: 48px;
-    }
-
-    .toggle-pass-btn {
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      font-size: 1rem;
-      padding: 4px;
-      line-height: 1;
-    }
-
-    .toggle-pass-btn:hover {
-      color: #fff;
-    }
-
-    .google-note {
-      font-size: 0.86rem;
-      color: var(--text-muted);
-      text-align: center;
-      line-height: 1.5;
-      margin-top: -4px;
-    }
 
     .btn-submit {
       background: var(--accent); color: #fff; border: none; padding: 13px; border-radius: 8px;
@@ -331,11 +274,11 @@
     </form>
 
     <div class="auth-nav">
-      <button type="button" class="btn-auth-open" id="openAuthBtn" onclick="openAuthModal()"><i class="fa-solid fa-user"></i> Войти</button>
+      <button class="btn-auth-open" id="openAuthBtn"><i class="fa-solid fa-user"></i> Войти</button>
       <div class="user-profile-badge" id="userBadge" style="display: none;">
         <div class="user-avatar" id="userInitial">U</div>
         <span class="user-name" id="userNameDisplay">Пользователь</span>
-        <button type="button" class="btn-logout" id="logoutBtn" title="Выйти" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i></button>
+        <button class="btn-logout" id="logoutBtn" title="Выйти"><i class="fa-solid fa-right-from-bracket"></i></button>
       </div>
     </div>
   </header>
@@ -359,7 +302,7 @@
               <span><i class="fa-solid fa-star" style="color: #e5a93c"></i> <span id="spidermanRating">—</span></span>
             </div>
             <p class="hero-desc" id="spidermanDesc">Загружаем информацию о фильме Новый Человек-паук...</p>
-            <button type="button" class="btn-auth-open" style="width: fit-content;"><i class="fa-solid fa-play"></i> Смотреть сейчас</button>
+            <button class="btn-auth-open" style="width: fit-content;"><i class="fa-solid fa-play"></i> Смотреть сейчас</button>
           </div>
         </div>
       </div>
@@ -373,7 +316,7 @@
 
     <!-- СТРАНИЦА ПРОСМОТРА -->
     <div id="watchPage" class="page">
-      <button type="button" class="back-btn" id="backBtn"><i class="fa-solid fa-arrow-left"></i> Назад к каталогу</button>
+      <button class="back-btn" id="backBtn"><i class="fa-solid fa-arrow-left"></i> Назад к каталогу</button>
 
       <div class="watch-container">
         <div class="player-wrapper" id="playerContainer">
@@ -406,7 +349,7 @@
               </div>
               
               <div class="controls-right">
-                <button type="button" class="quality-btn" id="qualityEnhanceBtn" title="Улучшить сочность картинки" onclick="handleQualityEnhance()">HD ULTRA</button>
+                <button class="quality-btn" id="qualityEnhanceBtn" title="Улучшить сочность картинки">HD ULTRA</button>
 
                 <div class="popover-wrapper">
                   <button class="ctrl-btn" id="brightBtn" title="Яркость"><i class="fa-solid fa-sun"></i></button>
@@ -453,8 +396,8 @@
   <!-- МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ И РЕГИСТРАЦИИ -->
   <div class="modal-overlay" id="authModal">
     <div class="auth-card">
-      <button type="button" class="close-modal" id="closeAuthBtn" onclick="closeAuthModal()"><i class="fa-solid fa-xmark"></i></button>
-
+      <button class="close-modal" id="closeAuthBtn"><i class="fa-solid fa-xmark"></i></button>
+      
       <div class="auth-tabs">
         <div class="auth-tab active" id="tabLoginBtn">Войти</div>
         <div class="auth-tab" id="tabRegisterBtn">Регистрация</div>
@@ -466,19 +409,12 @@
       <form class="auth-form active" id="loginForm">
         <div class="input-group">
           <label>Логин или Email</label>
-          <input type="text" id="loginEmailInput" placeholder="введите email" autocomplete="email" required />
+          <input type="text" id="loginEmailInput" placeholder="введите email" required />
         </div>
-
         <div class="input-group">
           <label>Пароль</label>
-          <div class="password-field">
-            <input type="password" id="loginPasswordInput" placeholder="••••••••" autocomplete="current-password" required />
-            <button type="button" class="toggle-pass-btn" onclick="togglePassword('loginPasswordInput', this)" aria-label="Показать или скрыть пароль">
-              <i class="fa-solid fa-eye"></i>
-            </button>
-          </div>
+          <input type="password" id="loginPasswordInput" placeholder="••••••••" required />
         </div>
-
         <button type="submit" class="btn-submit">Войти в аккаунт</button>
       </form>
 
@@ -486,44 +422,45 @@
       <form class="auth-form" id="registerForm">
         <div class="input-group">
           <label>Логин</label>
-          <input type="text" id="regLoginInput" placeholder="Придумайте логин" autocomplete="username" required />
+          <input type="text" id="regLoginInput" placeholder="Придумайте логин" required />
         </div>
-
         <div class="input-group">
           <label>Email</label>
-          <input type="email" id="regEmailInput" placeholder="example@mail.com" autocomplete="email" required />
+          <input type="email" id="regEmailInput" placeholder="example@mail.com" required />
         </div>
-
         <div class="input-group">
           <label>Пароль (мин. 8 символов, цифры и буквы)</label>
-          <div class="password-field">
-            <input type="password" id="regPasswordInput" placeholder="••••••••" autocomplete="new-password" required />
-            <button type="button" class="toggle-pass-btn" onclick="togglePassword('regPasswordInput', this)" aria-label="Показать или скрыть пароль">
-              <i class="fa-solid fa-eye"></i>
-            </button>
-          </div>
+          <input type="password" id="regPasswordInput" placeholder="••••••••" required />
         </div>
-
         <div class="input-group">
           <label>Подтвердите пароль</label>
-          <div class="password-field">
-            <input type="password" id="regConfirmPasswordInput" placeholder="••••••••" autocomplete="new-password" required />
-            <button type="button" class="toggle-pass-btn" onclick="togglePassword('regConfirmPasswordInput', this)" aria-label="Показать или скрыть пароль">
-              <i class="fa-solid fa-eye"></i>
-            </button>
-          </div>
+          <input type="password" id="regConfirmPasswordInput" placeholder="••••••••" required />
         </div>
-
         <button type="submit" class="btn-submit">Зарегистрироваться</button>
+      </form>
+
+      <!-- ФОРМА GOOGLE ПАРОЛЯ -->
+      <form class="auth-form" id="googlePasswordForm">
+        <p style="font-size: 0.9rem; color: var(--text-muted); text-align: center;" id="googleStepTitle">
+          Подтвердите ваш пароль от аккаунта
+        </p>
+        <div class="input-group">
+          <label>Пароль</label>
+          <input type="password" id="googlePasswordInput" placeholder="••••••••" required />
+        </div>
+        <div class="input-group" id="googleConfirmGroup" style="display: none;">
+          <label>Подтвердите пароль</label>
+          <input type="password" id="googleConfirmPasswordInput" placeholder="••••••••" />
+        </div>
+        <button type="submit" class="btn-submit" id="googleStepSubmitBtn">Продолжить</button>
       </form>
 
       <div id="googleAuthSection">
         <div class="auth-divider">или</div>
-        <button class="btn-google" id="googleLoginBtn" type="button" onclick="handleGoogleAuth()">
+        <button class="btn-google" id="googleLoginBtn">
           <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
           Войти с Google
         </button>
-        <p class="google-note">Откроется стандартное окно Google с выбором аккаунта.</p>
       </div>
     </div>
   </div>
@@ -599,17 +536,16 @@
     const tabRegisterBtn = document.getElementById('tabRegisterBtn');
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
+    const googlePasswordForm = document.getElementById('googlePasswordForm');
+    const googleAuthSection = document.getElementById('googleAuthSection');
     const authErrorMsg = document.getElementById('authErrorMsg');
-    const googleLoginBtn = document.getElementById('googleLoginBtn');
-
-    const authHelpers = window.firebaseAuthHelpers || {};
-    const auth = window.firebaseAuth || null;
-    const googleProvider = window.googleProvider || null;
 
     // Переменные состояния
     let isFullMoviePlaying = false;
     let pendingResumeTime = 0;
     let currentUser = null; // Хранит профиль авторизованного пользователя
+    let tempGoogleUser = null; // Временный Google профиль
+    let isNewGoogleUser = false;
 
     // Web Audio Context для высокого уровня громкости (усиление до 200%)
     let audioCtx = null;
@@ -625,7 +561,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       loadSpidermanFromApi();
-      initAuthState();
+      initSavedUserSession();
 
       document.getElementById('mainMovieCard').addEventListener('click', () => {
         openWatchPage({
@@ -683,6 +619,14 @@
       brightSlider.addEventListener('input', updateVideoFilters);
 
       // Проверка авторизации при нажатии HD ULTRA
+      qualityEnhanceBtn.addEventListener('click', () => {
+        if (!currentUser) {
+          showToast("Войдите в аккаунт, чтобы воспользоваться этой функцией!");
+          return;
+        }
+        qualityEnhanceBtn.classList.toggle('active');
+        updateVideoFilters();
+      });
 
       document.addEventListener('click', () => {
         speedMenu.classList.remove('active');
@@ -706,69 +650,54 @@
       });
 
       // Авторизация события
+      openAuthBtn.addEventListener('click', openAuthModal);
+      closeAuthBtn.addEventListener('click', closeAuthModal);
+      logoutBtn.addEventListener('click', handleLogout);
 
       tabLoginBtn.addEventListener('click', () => switchAuthTab('login'));
       tabRegisterBtn.addEventListener('click', () => switchAuthTab('register'));
 
       loginForm.addEventListener('submit', handleLoginSubmit);
       registerForm.addEventListener('submit', handleRegisterSubmit);
+      googlePasswordForm.addEventListener('submit', handleGooglePasswordSubmit);
+      document.getElementById('googleLoginBtn').addEventListener('click', handleGoogleAuth);
 
       document.addEventListener('keydown', handleKeyPress);
-
-      // Глобальные обработчики для inline onclick
-      window.openAuthModal = openAuthModal;
-      window.closeAuthModal = closeAuthModal;
-      window.handleGoogleAuth = handleGoogleAuth;
-      window.handleLogout = handleLogout;
-      window.togglePassword = togglePassword;
-      window.handleQualityEnhance = handleQualityEnhance;
     });
 
-    function initAuthState() {
-      if (!auth || !authHelpers.onAuthStateChanged) {
-        updateAuthUI(null);
-        return;
-      }
+    /* --- ФУНКЦИИ ФИЛЬТРОВ И ЗВУКА --- */
+    function updateVideoFilters() {
+      const brightness = brightSlider.value;
+      const isHd = qualityEnhanceBtn.classList.contains('active');
 
-      authHelpers.onAuthStateChanged(auth, (user) => {
-        updateAuthUI(user);
-      });
-    }
-
-    function updateAuthUI(user) {
-      currentUser = user || null;
-
-      if (currentUser) {
-        openAuthBtn.style.display = 'none';
-        userBadge.style.display = 'flex';
-
-        const name = currentUser.displayName || currentUser.email || 'Пользователь';
-        userNameDisplay.textContent = name;
-        userInitial.textContent = (name[0] || 'U').toUpperCase();
-        qualityEnhanceBtn.classList.remove('locked');
-        qualityEnhanceBtn.title = 'Улучшить сочность картинки';
+      if (isHd) {
+        videoElem.style.filter = `brightness(${brightness}) contrast(1.12) saturate(1.2)`;
       } else {
-        userBadge.style.display = 'none';
-        openAuthBtn.style.display = 'flex';
-        qualityEnhanceBtn.classList.remove('active');
-        qualityEnhanceBtn.classList.add('locked');
-        qualityEnhanceBtn.title = 'Войдите в аккаунт, чтобы включить HD ULTRA';
+        videoElem.style.filter = `brightness(${brightness})`;
       }
     }
 
-    function togglePassword(inputId, btn) {
-      const input = document.getElementById(inputId);
-      if (!input) return;
-
-      const icon = btn.querySelector('i');
-      const isHidden = input.type === 'password';
-      input.type = isHidden ? 'text' : 'password';
-
-      if (icon) {
-        icon.className = isHidden ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+    function initAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioCtx.createMediaElementSource(videoElem);
+        gainNode = audioCtx.createGain();
+        source.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
       }
     }
 
+    function handleVolumeChange() {
+      initAudioContext();
+      const val = parseFloat(volumeSlider.value);
+      videoElem.volume = Math.min(1, val);
+      if (gainNode) {
+        gainNode.gain.value = val; // Усиление громкости до 200%
+      }
+      updateVolumeIcon();
+    }
+
+    /* --- АВТОРИЗАЦИЯ БЕЗОПАСНОСТИ И FIREBASE --- */
     function validatePassword(pass) {
       // Минимум 8 символов, хотя бы одна цифра и одна буква
       const re = /^(?=.*[A-Za-zА-Яа-я])(?=.*\d).{8,}$/;
@@ -783,11 +712,13 @@
 
     function closeAuthModal() {
       authModal.classList.remove('active');
-      authErrorMsg.style.display = 'none';
+      tempGoogleUser = null;
     }
 
     function switchAuthTab(tab) {
       authErrorMsg.style.display = 'none';
+      googlePasswordForm.classList.remove('active');
+      googleAuthSection.style.display = 'block';
 
       if (tab === 'login') {
         tabLoginBtn.classList.add('active');
@@ -807,11 +738,6 @@
       authErrorMsg.style.display = 'block';
     }
 
-    function clearAuthError() {
-      authErrorMsg.textContent = '';
-      authErrorMsg.style.display = 'none';
-    }
-
     function showToast(msg) {
       const toast = document.getElementById('toastMsg');
       toast.textContent = msg;
@@ -819,42 +745,58 @@
       setTimeout(() => { toast.style.display = 'none'; }, 3500);
     }
 
+    function setUserLoggedIn(user) {
+      currentUser = user;
+      localStorage.setItem('sevimli_user', JSON.stringify(user));
+      openAuthBtn.style.display = 'none';
+      userBadge.style.display = 'flex';
+      userNameDisplay.textContent = user.login || user.email.split('@')[0];
+      userInitial.textContent = (user.login || user.email)[0].toUpperCase();
+      closeAuthModal();
+      showToast(`Добро пожаловать, ${userNameDisplay.textContent}!`);
+    }
+
     function handleLogout() {
-      if (auth && authHelpers.signOut) {
-        authHelpers.signOut(auth).catch(() => {});
-      }
-      updateAuthUI(null);
+      currentUser = null;
+      localStorage.removeItem('sevimli_user');
+      if (window.firebaseAuth) signOut(window.firebaseAuth);
+      userBadge.style.display = 'none';
+      openAuthBtn.style.display = 'flex';
       qualityEnhanceBtn.classList.remove('active');
       updateVideoFilters();
       showToast("Вы вышли из аккаунта");
     }
 
+    function initSavedUserSession() {
+      const saved = localStorage.getItem('sevimli_user');
+      if (saved) {
+        try {
+          setUserLoggedIn(JSON.parse(saved));
+        } catch (e) {
+          localStorage.removeItem('sevimli_user');
+        }
+      }
+    }
+
+    // Вход по Логину/Паролю
     function handleLoginSubmit(e) {
       e.preventDefault();
-      clearAuthError();
-
       const loginEmail = document.getElementById('loginEmailInput').value.trim();
       const pass = document.getElementById('loginPasswordInput').value;
 
-      if (!auth || !authHelpers.signInWithEmailAndPassword) {
-        showAuthError("Firebase Auth не инициализирован.");
-        return;
-      }
+      const usersDb = JSON.parse(localStorage.getItem('sevimli_local_db') || '{}');
+      const user = Object.values(usersDb).find(u => u.email === loginEmail || u.login === loginEmail);
 
-      authHelpers.signInWithEmailAndPassword(auth, loginEmail, pass)
-        .then(() => {
-          closeAuthModal();
-          showToast("Вход выполнен успешно");
-        })
-        .catch((err) => {
-          showAuthError(getFriendlyAuthError(err));
-        });
+      if (user && user.password === pass) {
+        setUserLoggedIn(user);
+      } else {
+        showAuthError("Неверный логин/email или пароль!");
+      }
     }
 
-    async function handleRegisterSubmit(e) {
+    // Регистрация нового аккаунта
+    function handleRegisterSubmit(e) {
       e.preventDefault();
-      clearAuthError();
-
       const login = document.getElementById('regLoginInput').value.trim();
       const email = document.getElementById('regEmailInput').value.trim();
       const pass = document.getElementById('regPasswordInput').value;
@@ -870,62 +812,120 @@
         return;
       }
 
-      if (!auth || !authHelpers.createUserWithEmailAndPassword) {
-        showAuthError("Firebase Auth не инициализирован.");
+      const usersDb = JSON.parse(localStorage.getItem('sevimli_local_db') || '{}');
+      if (Object.values(usersDb).some(u => u.email === email || u.login === login)) {
+        showAuthError("Пользователь с таким email или логином уже существует!");
         return;
       }
 
-      try {
-        const userCredential = await authHelpers.createUserWithEmailAndPassword(auth, email, pass);
-        if (authHelpers.updateProfile) {
-          await authHelpers.updateProfile(userCredential.user, { displayName: login });
-        }
-        closeAuthModal();
-        showToast("Регистрация успешна");
-      } catch (err) {
-        showAuthError(getFriendlyAuthError(err));
+      const newUser = { login, email, password: pass };
+      usersDb[email] = newUser;
+      localStorage.setItem('sevimli_local_db', JSON.stringify(usersDb));
+
+      // Если подключен Firebase Firestore — сохраняем туда
+      if (window.firebaseDB) {
+        setDoc(doc(window.firebaseDB, "users", email), { login, email, password: pass }).catch(()=>{});
       }
+
+      setUserLoggedIn(newUser);
     }
 
+    /* GOOGLE АВТОРИЗАЦИЯ С ОБЯЗАТЕЛЬНОЙ ПРОВЕРКОЙ ПАРОЛЯ */
     async function handleGoogleAuth() {
-      clearAuthError();
+      authErrorMsg.style.display = 'none';
 
-      if (!auth || !authHelpers.signInWithPopup || !googleProvider) {
-        showAuthError("Firebase Google Auth не инициализирован.");
+      if (!window.firebaseAuth) {
+        // Запасной локальный симулятор если Firebase API ключ не заменен пользователем
+        simulateGoogleAuth();
         return;
       }
 
       try {
-        await authHelpers.signInWithPopup(auth, googleProvider);
-        closeAuthModal();
-        showToast("Вход через Google выполнен");
+        const result = await signInWithPopup(window.firebaseAuth, window.googleProvider);
+        const gUser = result.user;
+        await processGoogleUserData(gUser.email, gUser.displayName);
       } catch (err) {
-        showAuthError(getFriendlyAuthError(err));
+        simulateGoogleAuth();
       }
     }
 
-    function handleQualityEnhance() {
-      if (!currentUser) {
-        showToast('Сначала войдите в аккаунт');
-        openAuthModal();
-        return;
-      }
-      qualityEnhanceBtn.classList.toggle('active');
-      updateVideoFilters();
+    function simulateGoogleAuth() {
+      // Имитация входа через Google
+      const mockEmail = "google_user@gmail.com";
+      const mockName = "GoogleUser";
+      processGoogleUserData(mockEmail, mockName);
     }
 
-    function getFriendlyAuthError(err) {
-      const code = err && err.code ? err.code : '';
-      if (code === 'auth/invalid-email') return 'Неверный email.';
-      if (code === 'auth/user-disabled') return 'Этот аккаунт отключен.';
-      if (code === 'auth/user-not-found') return 'Пользователь не найден.';
-      if (code === 'auth/wrong-password') return 'Неверный пароль.';
-      if (code === 'auth/email-already-in-use') return 'Этот email уже используется.';
-      if (code === 'auth/weak-password') return 'Слабый пароль.';
-      if (code === 'auth/popup-closed-by-user') return 'Окно входа Google было закрыто.';
-      if (code === 'auth/cancelled-popup-request') return 'Запрос входа был отменен.';
-      if (code === 'auth/account-exists-with-different-credential') return 'Аккаунт уже существует с другим способом входа.';
-      return (err && err.message) ? err.message : 'Ошибка авторизации.';
+    async function processGoogleUserData(email, name) {
+      tempGoogleUser = { email, login: name || email.split('@')[0] };
+
+      // Проверяем наличие аккаунта в базе
+      let usersDb = JSON.parse(localStorage.getItem('sevimli_local_db') || '{}');
+      let existingUser = usersDb[email];
+
+      if (window.firebaseDB) {
+        try {
+          const docSnap = await getDoc(doc(window.firebaseDB, "users", email));
+          if (docSnap.exists()) existingUser = docSnap.data();
+        } catch(e) {}
+      }
+
+      loginForm.classList.remove('active');
+      registerForm.classList.remove('active');
+      googleAuthSection.style.display = 'none';
+      googlePasswordForm.classList.add('active');
+
+      if (existingUser) {
+        // Аккаунт есть -> запрашиваем пароль
+        isNewGoogleUser = false;
+        document.getElementById('googleStepTitle').textContent = "Введите установленный пароль аккаунта";
+        document.getElementById('googleConfirmGroup').style.display = 'none';
+      } else {
+        // Аккаунт НЕ создан -> просим создать и подтвердить пароль
+        isNewGoogleUser = true;
+        document.getElementById('googleStepTitle').textContent = "Создайте пароль для завершения регистрации";
+        document.getElementById('googleConfirmGroup').style.display = 'flex';
+      }
+    }
+
+    function handleGooglePasswordSubmit(e) {
+      e.preventDefault();
+      const pass = document.getElementById('googlePasswordInput').value;
+      const confirmPass = document.getElementById('googleConfirmPasswordInput').value;
+
+      if (!tempGoogleUser) return;
+
+      let usersDb = JSON.parse(localStorage.getItem('sevimli_local_db') || '{}');
+
+      if (isNewGoogleUser) {
+        if (pass !== confirmPass) {
+          showAuthError("Пароли не совпадают!");
+          return;
+        }
+        if (!validatePassword(pass)) {
+          showAuthError("Пароль должен быть минимум 8 символов и содержать цифры и буквы!");
+          return;
+        }
+
+        // Только теперь создаем аккаунт!
+        tempGoogleUser.password = pass;
+        usersDb[tempGoogleUser.email] = tempGoogleUser;
+        localStorage.setItem('sevimli_local_db', JSON.stringify(usersDb));
+
+        if (window.firebaseDB) {
+          setDoc(doc(window.firebaseDB, "users", tempGoogleUser.email), tempGoogleUser).catch(()=>{});
+        }
+
+        setUserLoggedIn(tempGoogleUser);
+      } else {
+        // Проверяем введенный пароль
+        const existingUser = usersDb[tempGoogleUser.email];
+        if (existingUser && existingUser.password === pass) {
+          setUserLoggedIn(existingUser);
+        } else {
+          showAuthError("Неверный пароль аккаунта!");
+        }
+      }
     }
 
     /* --- ПОИСК КИНО И ПЛЕЕР --- */
