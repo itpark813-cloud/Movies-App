@@ -78,6 +78,14 @@
     .modal-title-text { font-size: 1.5rem; font-weight: 800; margin-bottom: 5px; }
     .empty-state { grid-column: 1 / -1; color: var(--text-muted); text-align: center; padding: 30px 0; }
 
+    .server-tabs { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+    .server-tab {
+      background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-color);
+      color: var(--text-muted); padding: 8px 16px; border-radius: 8px; cursor: pointer;
+      font-size: 0.85rem; font-weight: 600; transition: all 0.2s ease;
+    }
+    .server-tab.active, .server-tab:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
     @media (max-width: 768px) {
       .header { flex-direction: column; align-items: stretch; }
       .container { padding-top: 140px; }
@@ -93,7 +101,7 @@
     </a>
     <form class="search-form" id="searchForm">
       <i class="fa-solid fa-magnifying-glass"></i>
-      <input type="text" id="searchInput" placeholder="Напишите название фильма (например, Один дома)..." autocomplete="off" />
+      <input type="text" id="searchInput" placeholder="Напишите название фильма..." autocomplete="off" />
     </form>
   </header>
 
@@ -117,6 +125,10 @@
       </div>
 
       <div class="modal-details">
+        <div class="server-tabs" id="serverTabs">
+          <button class="server-tab active" data-server="collaps">Сервер 1 (Collaps)</button>
+          <button class="server-tab" data-server="alloha">Сервер 2 (Alloha)</button>
+        </div>
         <h2 class="modal-title-text" id="modalTitle">Название фильма</h2>
         <p style="color: var(--text-muted); font-size: 0.9rem;" id="modalSub">Смотреть онлайн</p>
       </div>
@@ -128,6 +140,7 @@
     const API_URL_POPULAR = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/collections?type=TOP_POPULAR_MOVIES&page=1';
     const API_URL_SEARCH = 'https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=';
 
+    let currentKpId = null;
     const moviesGrid = document.getElementById('moviesGrid');
     const searchForm = document.getElementById('searchForm');
     const searchInput = document.getElementById('searchInput');
@@ -137,6 +150,7 @@
     const playerBox = document.getElementById('playerBox');
     const modalTitle = document.getElementById('modalTitle');
     const modalSub = document.getElementById('modalSub');
+    const serverBtns = document.querySelectorAll('.server-tab');
 
     document.addEventListener('DOMContentLoaded', () => {
       loadPopularMovies();
@@ -149,18 +163,21 @@
       });
 
       modalCloseBtn.addEventListener('click', closeModal);
-      videoModal.addEventListener('click', (e) => {
-        if (e.target === videoModal) closeModal();
-      });
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeModal();
+      videoModal.addEventListener('click', (e) => { if (e.target === videoModal) closeModal(); });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+      serverBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          serverBtns.forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
+          loadServer(e.target.dataset.server);
+        });
       });
     });
 
     async function loadPopularMovies() {
       sectionTitle.innerHTML = '<i class="fa-solid fa-fire" style="color: var(--accent)"></i> В тренде';
       moviesGrid.innerHTML = '<p class="empty-state">Загрузка фильмов...</p>';
-
       try {
         const res = await fetch(API_URL_POPULAR, { headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' } });
         const data = await res.json();
@@ -173,7 +190,6 @@
     async function searchMovies(query) {
       sectionTitle.innerHTML = '<i class="fa-solid fa-magnifying-glass" style="color: var(--accent)"></i> Поиск: "' + escapeHtml(query) + '"';
       moviesGrid.innerHTML = '<p class="empty-state">Ищем...</p>';
-
       try {
         const res = await fetch(API_URL_SEARCH + encodeURIComponent(query), { headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' } });
         const data = await res.json();
@@ -189,13 +205,11 @@
         moviesGrid.innerHTML = '<p class="empty-state">Фильмы не найдены</p>';
         return;
       }
-
       movies.forEach(movie => {
         const id = movie.kinopoiskId || movie.filmId;
         const title = movie.nameRu || movie.nameEn || 'Без названия';
         const year = movie.year || '';
         const poster = movie.posterUrlPreview || movie.posterUrl;
-
         if (!id) return;
 
         const card = document.createElement('div');
@@ -209,20 +223,33 @@
             <div class="card-sub">${escapeHtml(String(year))}</div>
           </div>
         `;
-
         card.addEventListener('click', () => openPlayer(id, title, year));
         moviesGrid.appendChild(card);
       });
     }
 
     function openPlayer(kpId, title, year) {
+      currentKpId = kpId;
       modalTitle.textContent = title;
       modalSub.textContent = `${year} • Смотреть онлайн`;
       videoModal.classList.add('active');
       document.body.style.overflow = 'hidden';
 
-      // Агрегатор Yohoho.cc - сам ищет незаблокированные зеркала и вставляет нужный плеер
-      const iframeUrl = `https://yohoho.cc/widget3/?kp=${kpId}`;
+      serverBtns.forEach(b => b.classList.remove('active'));
+      serverBtns[0].classList.add('active');
+      loadServer('collaps');
+    }
+
+    function loadServer(serverName) {
+      if (!currentKpId) return;
+      let iframeUrl = '';
+
+      if (serverName === 'collaps') {
+        iframeUrl = `https://api.bhcesh.me/embed/movie/${currentKpId}`;
+      } else if (serverName === 'alloha') {
+        iframeUrl = `https://allohatv.com/embed/kp/${currentKpId}`;
+      }
+
       playerBox.innerHTML = `<iframe src="${iframeUrl}" allowfullscreen allow="autoplay" loading="lazy"></iframe>`;
     }
 
