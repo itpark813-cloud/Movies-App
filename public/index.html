@@ -56,33 +56,43 @@
     .card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
 
     .modal {
-      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(15px);
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.92); backdrop-filter: blur(15px);
       z-index: 2000; display: flex; align-items: center; justify-content: center;
       opacity: 0; pointer-events: none; transition: opacity 0.3s ease; padding: 15px;
     }
     .modal.active { opacity: 1; pointer-events: auto; }
     .modal-container {
-      background: var(--bg-secondary); border-radius: var(--radius-lg); width: 100%; max-width: 900px;
-      max-height: 95vh; overflow-y: auto; border: 1px solid var(--border-color); position: relative;
+      background: var(--bg-secondary); border-radius: var(--radius-lg); width: 100%; max-width: 600px;
+      overflow: hidden; border: 1px solid var(--border-color); position: relative; text-align: center;
+      padding: 40px 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
     }
     .modal-close {
-      position: absolute; top: 15px; right: 15px; background: rgba(0, 0, 0, 0.7); border: none;
+      position: absolute; top: 15px; right: 15px; background: rgba(255, 255, 255, 0.08); border: none;
       color: #fff; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 100; font-size: 1.2rem;
+      transition: background 0.2s;
     }
+    .modal-close:hover { background: rgba(255, 255, 255, 0.2); }
 
-    .player-box { position: relative; width: 100%; min-height: 450px; background: #000; border-radius: var(--radius-lg) var(--radius-lg) 0 0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-    .player-loading { color: var(--text-muted); font-size: 0.9rem; }
-    .player-box iframe { width: 100%; height: 100%; min-height: 450px; border: none; display: block; background: #000; }
+    .modal-title-text { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; color: #fff; }
+    .modal-sub { font-size: 1rem; color: var(--text-muted); margin-bottom: 30px; }
 
-    .modal-details { padding: 20px; }
-    .modal-title-text { font-size: 1.5rem; font-weight: 800; margin-bottom: 5px; }
+    .watch-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+      background: var(--accent); color: #fff; padding: 16px 36px; border-radius: 30px;
+      text-decoration: none; font-weight: 700; font-size: 1.1rem;
+      transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+      box-shadow: 0 6px 20px rgba(229, 9, 20, 0.4);
+    }
+    .watch-btn:hover { background: #f40612; transform: translateY(-3px); box-shadow: 0 8px 25px rgba(229, 9, 20, 0.6); }
+
     .empty-state { grid-column: 1 / -1; color: var(--text-muted); text-align: center; padding: 30px 0; }
 
     @media (max-width: 768px) {
       .header { flex-direction: column; align-items: stretch; }
       .container { padding-top: 140px; }
       .movies-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
-      .player-box, .player-box iframe { min-height: 280px; }
+      .modal-container { padding: 30px 20px; }
+      .modal-title-text { font-size: 1.4rem; }
     }
   </style>
 </head>
@@ -112,13 +122,11 @@
         <i class="fa-solid fa-xmark"></i>
       </button>
 
-      <div class="player-box" id="playerBox">
-        <span class="player-loading">Загрузка плеера...</span>
-      </div>
+      <h2 class="modal-title-text" id="modalTitle">Название фильма</h2>
+      <p class="modal-sub" id="modalSub">2026 • Смотреть онлайн</p>
 
-      <div class="modal-details">
-        <h2 class="modal-title-text" id="modalTitle">Название фильма</h2>
-        <p style="color: var(--text-muted); font-size: 0.9rem;" id="modalSub">Смотреть онлайн</p>
+      <div id="playerAction">
+        <!-- Кнопка динамически генерирует ссылку на поиск Filmix -->
       </div>
     </div>
   </div>
@@ -134,9 +142,9 @@
     const sectionTitle = document.getElementById('sectionTitle');
     const videoModal = document.getElementById('videoModal');
     const modalCloseBtn = document.getElementById('modalCloseBtn');
-    const playerBox = document.getElementById('playerBox');
     const modalTitle = document.getElementById('modalTitle');
     const modalSub = document.getElementById('modalSub');
+    const playerAction = document.getElementById('playerAction');
 
     document.addEventListener('DOMContentLoaded', () => {
       loadPopularMovies();
@@ -201,25 +209,30 @@
             <div class="card-sub">${escapeHtml(String(year))}</div>
           </div>
         `;
-        card.addEventListener('click', () => openPlayer(id, title, year));
+        card.addEventListener('click', () => openPlayer(title, year));
         moviesGrid.appendChild(card);
       });
     }
 
-    function openPlayer(kpId, title, year) {
+    function openPlayer(title, year) {
       modalTitle.textContent = title;
-      modalSub.textContent = `${year} • Смотреть онлайн`;
+      modalSub.textContent = `${year || ''} • HD2 Плеер`;
       videoModal.classList.add('active');
       document.body.style.overflow = 'hidden';
 
-      // Плеер Filmix (включая HD2 и внутренние потоки)
-      const iframeUrl = `https://filmix.ac/embed/kp/${kpId}`;
-      playerBox.innerHTML = `<iframe src="${iframeUrl}" allowfullscreen allow="autoplay" loading="lazy"></iframe>`;
+      // Ссылка на поиск фильма на Filmix для запуска рабочего плеера
+      const filmixSearchUrl = `https://filmix.pub/index.php?do=search&subaction=search&story=` + encodeURIComponent(title);
+      
+      playerAction.innerHTML = `
+        <a href="${filmixSearchUrl}" target="_blank" class="watch-btn">
+          <i class="fa-solid fa-play"></i> Смотреть на Filmix
+        </a>
+      `;
     }
 
     function closeModal() {
       videoModal.classList.remove('active');
-      playerBox.innerHTML = '<span class="player-loading">Загрузка плеера...</span>';
+      playerAction.innerHTML = '';
       document.body.style.overflow = 'auto';
     }
 
