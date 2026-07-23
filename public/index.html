@@ -212,8 +212,8 @@
       videoModal.classList.add('active');
       document.body.style.overflow = 'hidden';
 
-      // Плеер HDVB
-      const iframeUrl = `https://video.hdvb.cloud/embed/kp/${kpId}`;
+      // Плеер Filmix (включая HD2 и внутренние потоки)
+      const iframeUrl = `https://filmix.ac/embed/kp/${kpId}`;
       playerBox.innerHTML = `<iframe src="${iframeUrl}" allowfullscreen allow="autoplay" loading="lazy"></iframe>`;
     }
 
