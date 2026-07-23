@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SevimliKino — Онлайн Фильмы</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
   <style>
     :root {
       --bg-primary: #0a0c10;
@@ -22,105 +21,350 @@
       --radius-lg: 20px;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-    body { background-color: var(--bg-primary); color: var(--text-main); overflow-x: hidden; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-main);
+      overflow-x: hidden;
+    }
 
     .header {
-      position: fixed; top: 0; left: 0; width: 100%; z-index: 1000;
-      background: rgba(10,12,16,0.92); backdrop-filter: blur(12px); padding: 15px 4%;
-      display: flex; align-items: center; justify-content: space-between; gap: 20px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
+      background: rgba(10, 12, 16, 0.92);
+      backdrop-filter: blur(12px);
+      padding: 15px 4%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
       border-bottom: 1px solid var(--border-color);
     }
 
-    .brand-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff; font-size: 1.5rem; font-weight: 800; }
-    .brand-logo span { color: var(--accent); }
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #fff;
+      font-size: 1.5rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
 
-    .search-form { position: relative; flex-grow: 1; max-width: 500px; }
+    .brand-logo span {
+      color: var(--accent);
+    }
+
+    .search-form {
+      position: relative;
+      flex-grow: 1;
+      max-width: 500px;
+    }
+
     .search-form input {
-      width: 100%; padding: 12px 16px 12px 45px; background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--border-color); border-radius: 30px; color: #fff; font-size: 0.95rem; outline: none;
+      width: 100%;
+      padding: 12px 16px 12px 45px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      border-radius: 30px;
+      color: #fff;
+      font-size: 0.95rem;
+      outline: none;
     }
-    .search-form input:focus { border-color: var(--accent); background: rgba(255, 255, 255, 0.12); }
-    .search-form i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
 
-    .container { padding: 100px 4% 60px; }
-    .section-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+    .search-form input:focus {
+      border-color: var(--accent);
+      background: rgba(255, 255, 255, 0.12);
+    }
 
-    .movies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 20px; }
-    .movie-card { background: var(--bg-card); border-radius: var(--radius-md); overflow: hidden; cursor: pointer; transition: transform 0.3s; position: relative; }
-    .movie-card:hover { transform: translateY(-8px); }
-    .card-thumb { position: relative; width: 100%; padding-top: 145%; background: var(--bg-secondary); }
-    .card-thumb img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
-    .card-info { padding: 12px; }
-    .card-title { font-size: 0.95rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+    .search-form i {
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
 
-    /* МОДАЛЬНОЕ ОКНО ПЛЕЕРА */
+    .container {
+      padding: 100px 4% 60px;
+    }
+
+    .section-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin-bottom: 25px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge-note {
+      font-size: 0.8rem;
+      font-weight: 400;
+      color: var(--text-muted);
+      background: rgba(255,255,255,0.06);
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-left: 8px;
+    }
+
+    .movies-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 20px;
+    }
+
+    .movie-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+      border: 1px solid transparent;
+    }
+
+    .movie-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+      border-color: rgba(229, 9, 20, 0.28);
+    }
+
+    .card-thumb {
+      position: relative;
+      width: 100%;
+      padding-top: 145%;
+      background: var(--bg-secondary);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-thumb img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .card-thumb i {
+      position: absolute;
+      font-size: 2.5rem;
+      color: var(--text-muted);
+    }
+
+    .card-info {
+      padding: 12px;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
     .modal {
-      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(15px);
-      z-index: 2000; display: flex; align-items: center; justify-content: center;
-      opacity: 0; pointer-events: none; transition: opacity 0.3s ease; padding: 15px;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(15px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      padding: 15px;
     }
-    .modal.active { opacity: 1; pointer-events: auto; }
+
+    .modal.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
     .modal-container {
-      background: var(--bg-secondary); border-radius: var(--radius-lg); width: 100%; max-width: 900px;
-      max-height: 95vh; overflow-y: auto; border: 1px solid var(--border-color); position: relative;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 900px;
+      max-height: 95vh;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      position: relative;
     }
+
     .modal-close {
-      position: absolute; top: 15px; right: 15px; background: rgba(0, 0, 0, 0.7); border: none;
-      color: #fff; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 100; font-size: 1.2rem;
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: rgba(0, 0, 0, 0.7);
+      border: none;
+      color: #fff;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 100;
+      font-size: 1.2rem;
     }
 
-    .player-box { position: relative; width: 100%; min-height: 450px; background: #000; border-radius: var(--radius-lg) var(--radius-lg) 0 0; overflow: hidden; }
-    .player-box iframe { width: 100%; height: 100%; min-height: 450px; border: none; display: block; }
+    .player-box {
+      position: relative;
+      width: 100%;
+      min-height: 450px;
+      background: #000;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-    .modal-details { padding: 20px; }
-    .modal-title-text { font-size: 1.5rem; font-weight: 800; margin-bottom: 5px; }
+    .player-box video {
+      width: 100%;
+      height: 100%;
+      min-height: 450px;
+      display: block;
+      background: #000;
+    }
+
+    .player-loading {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .modal-details {
+      padding: 20px;
+    }
+
+    .modal-title-text {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 5px;
+    }
+
+    .modal-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 12px;
+      line-height: 1.5;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .modal-source-link {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 0.8rem;
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 30px 0;
+    }
 
     @media (max-width: 768px) {
-      .header { flex-direction: column; align-items: stretch; }
-      .container { padding-top: 140px; }
-      .movies-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
-      .player-box, .player-box iframe { min-height: 280px; }
+      .header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .container {
+        padding-top: 140px;
+      }
+
+      .movies-grid {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 12px;
+      }
+
+      .player-box,
+      .player-box video {
+        min-height: 280px;
+      }
     }
   </style>
 </head>
 <body>
-
   <header class="header">
-    <a href="#" class="brand-logo">
-      <i class="fa-solid fa-play-circle" style="color: var(--accent)"></i> Sevimli<span>Kino</span>
+    <a href="#" class="brand-logo" onclick="return false;">
+      <i class="fa-solid fa-play-circle" style="color: var(--accent)"></i>
+      Sevimli<span>Kino</span>
     </a>
     <form class="search-form" id="searchForm">
       <i class="fa-solid fa-magnifying-glass"></i>
-      <input type="text" id="searchInput" placeholder="Напишите название фильма...">
+      <input type="text" id="searchInput" placeholder="Напишите название фильма..." autocomplete="off" />
     </form>
   </header>
 
   <div class="container">
-    <h1 class="section-title" id="sectionTitle"><i class="fa-solid fa-fire" style="color: var(--accent)"></i> В тренде</h1>
+    <h1 class="section-title" id="sectionTitle">
+      <i class="fa-solid fa-fire" style="color: var(--accent)"></i> Фильмы (общественное достояние)
+      <span class="badge-note">Archive.org</span>
+    </h1>
     <div class="movies-grid" id="moviesGrid">
-      <p style="grid-column: 1/-1; color: var(--text-muted);">Загрузка фильмов...</p>
+      <p class="empty-state">Загрузка фильмов...</p>
     </div>
   </div>
 
   <div class="modal" id="videoModal">
     <div class="modal-container">
-      <button class="modal-close" id="modalCloseBtn"><i class="fa-solid fa-xmark"></i></button>
-
-      <div class="player-box" id="playerBox"></div>
+      <button class="modal-close" id="modalCloseBtn" aria-label="Закрыть">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="player-box" id="playerBox">
+        <span class="player-loading">Загрузка видео...</span>
+      </div>
 
       <div class="modal-details">
         <h2 class="modal-title-text" id="modalTitle">Название фильма</h2>
         <p style="color: var(--text-muted); font-size: 0.9rem;" id="modalSub">Смотреть онлайн</p>
+        <p class="modal-desc" id="modalDesc"></p>
+        <a class="modal-source-link" id="modalSourceLink" href="#" target="_blank" rel="noopener">
+          Открыть страницу на archive.org <i class="fa-solid fa-arrow-up-right-from-square"></i>
+        </a>
       </div>
     </div>
   </div>
 
   <script>
-    const API_KEY = '8c8e1a50-6322-4135-8875-5d40a5420d86';
-    const API_URL_POPULAR = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/collections?type=TOP_POPULAR_MOVIES&page=1';
-    const API_URL_SEARCH = 'https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=';
+    // ==========================================================
+    // Archive.org — публичный API, ключ не нужен.
+    // Используем коллекцию "feature_films" (фильмы в общественном
+    // достоянии — легально для показа без прав на контент).
+    // Документация: https://archive.org/help/json.php
+    // ==========================================================
+
+    const SEARCH_URL = 'https://archive.org/advancedsearch.php';
+    const METADATA_URL = 'https://archive.org/metadata/';
 
     const moviesGrid = document.getElementById('moviesGrid');
     const searchForm = document.getElementById('searchForm');
@@ -129,93 +373,172 @@
     const videoModal = document.getElementById('videoModal');
     const modalCloseBtn = document.getElementById('modalCloseBtn');
     const playerBox = document.getElementById('playerBox');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalSub = document.getElementById('modalSub');
+    const modalDesc = document.getElementById('modalDesc');
+    const modalSourceLink = document.getElementById('modalSourceLink');
 
     document.addEventListener('DOMContentLoaded', () => {
       loadPopularMovies();
 
-      searchForm.onsubmit = (e) => {
+      searchForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const query = searchInput.value.trim();
         if (query) searchMovies(query);
-      };
+        else loadPopularMovies();
+      });
 
-      modalCloseBtn.onclick = closeModal;
-      videoModal.onclick = (e) => { if (e.target === videoModal) closeModal(); };
+      modalCloseBtn.addEventListener('click', closeModal);
+      videoModal.addEventListener('click', (e) => {
+        if (e.target === videoModal) closeModal();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeModal();
+      });
     });
 
+    // Строим URL для advancedsearch.php
+    function buildSearchUrl(query) {
+      const params = new URLSearchParams();
+      params.set('q', query);
+      params.set('fl[]', 'identifier');
+      params.append('fl[]', 'title');
+      params.append('fl[]', 'year');
+      params.append('fl[]', 'description');
+      params.set('rows', '30');
+      params.set('page', '1');
+      params.set('output', 'json');
+      params.set('sort[]', 'downloads desc');
+      return `${SEARCH_URL}?${params.toString()}`;
+    }
+
     async function loadPopularMovies() {
+      sectionTitle.innerHTML = '<i class="fa-solid fa-fire" style="color: var(--accent)"></i> Фильмы (общественное достояние) <span class="badge-note">Archive.org</span>';
+      moviesGrid.innerHTML = '<p class="empty-state">Загрузка фильмов...</p>';
+
+      // mediatype:movies + коллекция полнометражных фильмов в public domain
+      const q = 'mediatype:(movies) AND collection:(feature_films)';
+
       try {
-        const res = await fetch(API_URL_POPULAR, {
-          headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' }
-        });
+        const res = await fetch(buildSearchUrl(q));
         const data = await res.json();
-        renderMovies(data.items || []);
+        renderMovies(data.response ? data.response.docs : []);
       } catch (err) {
-        moviesGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Ошибка загрузки каталога</p>`;
+        moviesGrid.innerHTML = '<p class="empty-state">Ошибка загрузки каталога</p>';
       }
     }
 
     async function searchMovies(query) {
-      sectionTitle.innerHTML = `<i class="fa-solid fa-magnifying-glass"></i> Поиск: "${query}"`;
-      moviesGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Ищем...</p>`;
+      sectionTitle.innerHTML = '<i class="fa-solid fa-magnifying-glass" style="color: var(--accent)"></i> Поиск: "' + escapeHtml(query) + '"';
+      moviesGrid.innerHTML = '<p class="empty-state">Ищем...</p>';
+
+      const q = `mediatype:(movies) AND (${query})`;
 
       try {
-        const res = await fetch(API_URL_SEARCH + encodeURIComponent(query), {
-          headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' }
-        });
+        const res = await fetch(buildSearchUrl(q));
         const data = await res.json();
-        renderMovies(data.films || []);
+        renderMovies(data.response ? data.response.docs : []);
       } catch (err) {
-        moviesGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Ничего не найдено</p>`;
+        moviesGrid.innerHTML = '<p class="empty-state">Ничего не найдено</p>';
       }
     }
 
     function renderMovies(movies) {
       moviesGrid.innerHTML = '';
+
       if (!movies || movies.length === 0) {
-        moviesGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Фильмы не найдены</p>`;
+        moviesGrid.innerHTML = '<p class="empty-state">Фильмы не найдены</p>';
         return;
       }
 
       movies.forEach(movie => {
-        const id = movie.kinopoiskId || movie.filmId;
-        const title = movie.nameRu || movie.nameEn || 'Без названия';
-        const poster = movie.posterUrlPreview || movie.posterUrl;
+        const id = movie.identifier;
+        const title = movie.title || 'Без названия';
         const year = movie.year || '';
+        // Превью-постер archive.org генерирует автоматически по identifier
+        const poster = `https://archive.org/services/img/${id}`;
 
-        if (!id || !poster) return;
+        if (!id) return;
 
         const card = document.createElement('div');
         card.className = 'movie-card';
         card.innerHTML = `
           <div class="card-thumb">
-            <img src="${poster}" alt="${title}" loading="lazy">
+            <i class="fa-solid fa-film"></i>
+            <img src="${poster}" alt="${escapeHtml(title)}" loading="lazy" onerror="this.style.display='none'">
           </div>
           <div class="card-info">
-            <div class="card-title">${title}</div>
-            <div class="card-sub">${year}</div>
+            <div class="card-title">${escapeHtml(title)}</div>
+            <div class="card-sub">${escapeHtml(String(year))}</div>
           </div>
         `;
-        card.onclick = () => openPlayer(id, title, year);
+
+        card.addEventListener('click', () => {
+          openPlayer(id, title, year, movie.description || '');
+        });
+
         moviesGrid.appendChild(card);
       });
     }
 
-    function openPlayer(kpId, title, year) {
-      document.getElementById('modalTitle').textContent = title;
-      document.getElementById('modalSub').textContent = `${year} • Смотреть онлайн`;
-
+    async function openPlayer(identifier, title, year, description) {
+      modalTitle.textContent = title;
+      modalSub.textContent = `${year || ''} • Смотреть онлайн`;
+      modalDesc.textContent = stripHtml(description).slice(0, 500);
+      modalSourceLink.href = `https://archive.org/details/${identifier}`;
       videoModal.classList.add('active');
       document.body.style.overflow = 'hidden';
+      playerBox.innerHTML = '<span class="player-loading">Загрузка видео...</span>';
 
-      // Прямой вызов оригинального плеера Alloha (без прокси и внешних скриптов)
-      playerBox.innerHTML = `<iframe src="https://api.allohatv.com/?token=4db52824254f69d32d0577f8045620&kp=${kpId}" allowfullscreen style="width:100%; height:100%; border:none;"></iframe>`;
+      try {
+        // Получаем список файлов через Metadata API
+        const res = await fetch(METADATA_URL + identifier);
+        const data = await res.json();
+        const files = data.files || [];
+
+        // Ищем файл видео: приоритет mp4, затем другие видеоформаты
+        const videoFile =
+          files.find(f => f.name.toLowerCase().endsWith('.mp4')) ||
+          files.find(f => f.name.toLowerCase().endsWith('.ogv')) ||
+          files.find(f => f.name.toLowerCase().endsWith('.webm'));
+
+        if (!videoFile) {
+          playerBox.innerHTML = '<span class="player-loading">Видеофайл не найден для этого элемента</span>';
+          return;
+        }
+
+        const videoUrl = `https://archive.org/download/${identifier}/${encodeURIComponent(videoFile.name)}`;
+
+        playerBox.innerHTML = `
+          <video controls playsinline preload="metadata">
+            <source src="${videoUrl}" type="video/mp4">
+            Ваш браузер не поддерживает видео.
+          </video>
+        `;
+      } catch (err) {
+        playerBox.innerHTML = '<span class="player-loading">Ошибка загрузки видео</span>';
+      }
     }
 
     function closeModal() {
       videoModal.classList.remove('active');
       playerBox.innerHTML = '';
       document.body.style.overflow = 'auto';
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function stripHtml(html) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      return tmp.textContent || tmp.innerText || '';
     }
   </script>
 </body>
