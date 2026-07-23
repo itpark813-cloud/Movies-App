@@ -108,16 +108,6 @@
       gap: 10px;
     }
 
-    .badge-note {
-      font-size: 0.8rem;
-      font-weight: 400;
-      color: var(--text-muted);
-      background: rgba(255,255,255,0.06);
-      padding: 4px 10px;
-      border-radius: 20px;
-      margin-left: 8px;
-    }
-
     .movies-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
@@ -159,12 +149,6 @@
       height: 100%;
       object-fit: cover;
       display: block;
-    }
-
-    .card-thumb i {
-      position: absolute;
-      font-size: 2.5rem;
-      color: var(--text-muted);
     }
 
     .card-info {
@@ -244,10 +228,11 @@
       justify-content: center;
     }
 
-    .player-box video {
+    .player-box iframe {
       width: 100%;
       height: 100%;
       min-height: 450px;
+      border: none;
       display: block;
       background: #000;
     }
@@ -267,23 +252,6 @@
       margin-bottom: 5px;
     }
 
-    .modal-desc {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-top: 12px;
-      line-height: 1.5;
-      max-height: 150px;
-      overflow-y: auto;
-    }
-
-    .modal-source-link {
-      display: inline-block;
-      margin-top: 12px;
-      font-size: 0.8rem;
-      color: var(--accent);
-      text-decoration: none;
-    }
-
     .empty-state {
       grid-column: 1 / -1;
       color: var(--text-muted);
@@ -291,23 +259,43 @@
       padding: 30px 0;
     }
 
+    /* КНОПКИ ПЕРЕКЛЮЧЕНИЯ СЕРВЕРОВ */
+    .server-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    .server-tab {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .server-tab.active, .server-tab:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
     @media (max-width: 768px) {
       .header {
         flex-direction: column;
         align-items: stretch;
       }
-
       .container {
         padding-top: 140px;
       }
-
       .movies-grid {
         grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
         gap: 12px;
       }
-
-      .player-box,
-      .player-box video {
+      .player-box, .player-box iframe {
         min-height: 280px;
       }
     }
@@ -321,14 +309,13 @@
     </a>
     <form class="search-form" id="searchForm">
       <i class="fa-solid fa-magnifying-glass"></i>
-      <input type="text" id="searchInput" placeholder="Напишите название фильма..." autocomplete="off" />
+      <input type="text" id="searchInput" placeholder="Напишите название фильма (например, Один дома)..." autocomplete="off" />
     </form>
   </header>
 
   <div class="container">
     <h1 class="section-title" id="sectionTitle">
-      <i class="fa-solid fa-fire" style="color: var(--accent)"></i> Фильмы (общественное достояние)
-      <span class="badge-note">Archive.org</span>
+      <i class="fa-solid fa-fire" style="color: var(--accent)"></i> В тренде
     </h1>
     <div class="movies-grid" id="moviesGrid">
       <p class="empty-state">Загрузка фильмов...</p>
@@ -340,31 +327,31 @@
       <button class="modal-close" id="modalCloseBtn" aria-label="Закрыть">
         <i class="fa-solid fa-xmark"></i>
       </button>
+
       <div class="player-box" id="playerBox">
         <span class="player-loading">Загрузка видео...</span>
       </div>
 
       <div class="modal-details">
+        <div class="server-tabs" id="serverTabs">
+          <button class="server-tab active" data-server="kodik">Сервер 1 (Kodik)</button>
+          <button class="server-tab" data-server="voidboost">Сервер 2 (Void)</button>
+          <button class="server-tab" data-server="alloha">Сервер 3 (Alloha)</button>
+        </div>
+        
         <h2 class="modal-title-text" id="modalTitle">Название фильма</h2>
         <p style="color: var(--text-muted); font-size: 0.9rem;" id="modalSub">Смотреть онлайн</p>
-        <p class="modal-desc" id="modalDesc"></p>
-        <a class="modal-source-link" id="modalSourceLink" href="#" target="_blank" rel="noopener">
-          Открыть страницу на archive.org <i class="fa-solid fa-arrow-up-right-from-square"></i>
-        </a>
       </div>
     </div>
   </div>
 
   <script>
-    // ==========================================================
-    // Archive.org — публичный API, ключ не нужен.
-    // Используем коллекцию "feature_films" (фильмы в общественном
-    // достоянии — легально для показа без прав на контент).
-    // Документация: https://archive.org/help/json.php
-    // ==========================================================
+    // Подключаем легальный Кинопоиск для обложек и названий
+    const API_KEY = '8c8e1a50-6322-4135-8875-5d40a5420d86';
+    const API_URL_POPULAR = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/collections?type=TOP_POPULAR_MOVIES&page=1';
+    const API_URL_SEARCH = 'https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=';
 
-    const SEARCH_URL = 'https://archive.org/advancedsearch.php';
-    const METADATA_URL = 'https://archive.org/metadata/';
+    let currentKpId = null;
 
     const moviesGrid = document.getElementById('moviesGrid');
     const searchForm = document.getElementById('searchForm');
@@ -375,8 +362,7 @@
     const playerBox = document.getElementById('playerBox');
     const modalTitle = document.getElementById('modalTitle');
     const modalSub = document.getElementById('modalSub');
-    const modalDesc = document.getElementById('modalDesc');
-    const modalSourceLink = document.getElementById('modalSourceLink');
+    const serverBtns = document.querySelectorAll('.server-tab');
 
     document.addEventListener('DOMContentLoaded', () => {
       loadPopularMovies();
@@ -395,34 +381,27 @@
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closeModal();
       });
+
+      // Переключение серверов
+      serverBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          serverBtns.forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
+          loadServer(e.target.dataset.server);
+        });
+      });
     });
 
-    // Строим URL для advancedsearch.php
-    function buildSearchUrl(query) {
-      const params = new URLSearchParams();
-      params.set('q', query);
-      params.set('fl[]', 'identifier');
-      params.append('fl[]', 'title');
-      params.append('fl[]', 'year');
-      params.append('fl[]', 'description');
-      params.set('rows', '30');
-      params.set('page', '1');
-      params.set('output', 'json');
-      params.set('sort[]', 'downloads desc');
-      return `${SEARCH_URL}?${params.toString()}`;
-    }
-
     async function loadPopularMovies() {
-      sectionTitle.innerHTML = '<i class="fa-solid fa-fire" style="color: var(--accent)"></i> Фильмы (общественное достояние) <span class="badge-note">Archive.org</span>';
+      sectionTitle.innerHTML = '<i class="fa-solid fa-fire" style="color: var(--accent)"></i> В тренде';
       moviesGrid.innerHTML = '<p class="empty-state">Загрузка фильмов...</p>';
 
-      // mediatype:movies + коллекция полнометражных фильмов в public domain
-      const q = 'mediatype:(movies) AND collection:(feature_films)';
-
       try {
-        const res = await fetch(buildSearchUrl(q));
+        const res = await fetch(API_URL_POPULAR, {
+          headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' }
+        });
         const data = await res.json();
-        renderMovies(data.response ? data.response.docs : []);
+        renderMovies(data.items || []);
       } catch (err) {
         moviesGrid.innerHTML = '<p class="empty-state">Ошибка загрузки каталога</p>';
       }
@@ -432,12 +411,12 @@
       sectionTitle.innerHTML = '<i class="fa-solid fa-magnifying-glass" style="color: var(--accent)"></i> Поиск: "' + escapeHtml(query) + '"';
       moviesGrid.innerHTML = '<p class="empty-state">Ищем...</p>';
 
-      const q = `mediatype:(movies) AND (${query})`;
-
       try {
-        const res = await fetch(buildSearchUrl(q));
+        const res = await fetch(API_URL_SEARCH + encodeURIComponent(query), {
+          headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' }
+        });
         const data = await res.json();
-        renderMovies(data.response ? data.response.docs : []);
+        renderMovies(data.films || []);
       } catch (err) {
         moviesGrid.innerHTML = '<p class="empty-state">Ничего не найдено</p>';
       }
@@ -452,11 +431,10 @@
       }
 
       movies.forEach(movie => {
-        const id = movie.identifier;
-        const title = movie.title || 'Без названия';
+        const id = movie.kinopoiskId || movie.filmId;
+        const title = movie.nameRu || movie.nameEn || 'Без названия';
         const year = movie.year || '';
-        // Превью-постер archive.org генерирует автоматически по identifier
-        const poster = `https://archive.org/services/img/${id}`;
+        const poster = movie.posterUrlPreview || movie.posterUrl;
 
         if (!id) return;
 
@@ -474,55 +452,47 @@
         `;
 
         card.addEventListener('click', () => {
-          openPlayer(id, title, year, movie.description || '');
+          openPlayer(id, title, year);
         });
 
         moviesGrid.appendChild(card);
       });
     }
 
-    async function openPlayer(identifier, title, year, description) {
+    function openPlayer(kpId, title, year) {
+      currentKpId = kpId;
       modalTitle.textContent = title;
-      modalSub.textContent = `${year || ''} • Смотреть онлайн`;
-      modalDesc.textContent = stripHtml(description).slice(0, 500);
-      modalSourceLink.href = `https://archive.org/details/${identifier}`;
+      modalSub.textContent = `${year} • Смотреть онлайн`;
+      
       videoModal.classList.add('active');
       document.body.style.overflow = 'hidden';
-      playerBox.innerHTML = '<span class="player-loading">Загрузка видео...</span>';
 
-      try {
-        // Получаем список файлов через Metadata API
-        const res = await fetch(METADATA_URL + identifier);
-        const data = await res.json();
-        const files = data.files || [];
+      // Сбрасываем кнопки на Сервер 1
+      serverBtns.forEach(b => b.classList.remove('active'));
+      serverBtns[0].classList.add('active');
+      
+      // Запускаем по умолчанию первый сервер
+      loadServer('kodik');
+    }
 
-        // Ищем файл видео: приоритет mp4, затем другие видеоформаты
-        const videoFile =
-          files.find(f => f.name.toLowerCase().endsWith('.mp4')) ||
-          files.find(f => f.name.toLowerCase().endsWith('.ogv')) ||
-          files.find(f => f.name.toLowerCase().endsWith('.webm'));
-
-        if (!videoFile) {
-          playerBox.innerHTML = '<span class="player-loading">Видеофайл не найден для этого элемента</span>';
-          return;
-        }
-
-        const videoUrl = `https://archive.org/download/${identifier}/${encodeURIComponent(videoFile.name)}`;
-
-        playerBox.innerHTML = `
-          <video controls playsinline preload="metadata">
-            <source src="${videoUrl}" type="video/mp4">
-            Ваш браузер не поддерживает видео.
-          </video>
-        `;
-      } catch (err) {
-        playerBox.innerHTML = '<span class="player-loading">Ошибка загрузки видео</span>';
+    function loadServer(serverName) {
+      if (!currentKpId) return;
+      
+      let iframeUrl = '';
+      if (serverName === 'kodik') {
+        iframeUrl = `//kodik.cc/find-player?kinopoiskID=${currentKpId}`;
+      } else if (serverName === 'voidboost') {
+        iframeUrl = `https://voidboost.net/embed/${currentKpId}`;
+      } else if (serverName === 'alloha') {
+        iframeUrl = `https://api.allohatv.com/?token=4db52824254f69d32d0577f8045620&kp=${currentKpId}`;
       }
+
+      playerBox.innerHTML = `<iframe src="${iframeUrl}" allowfullscreen allow="autoplay" loading="lazy"></iframe>`;
     }
 
     function closeModal() {
       videoModal.classList.remove('active');
-      playerBox.innerHTML = '';
+      playerBox.innerHTML = '<span class="player-loading">Загрузка видео...</span>';
       document.body.style.overflow = 'auto';
     }
 
@@ -533,12 +503,6 @@
         .replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#039;');
-    }
-
-    function stripHtml(html) {
-      const tmp = document.createElement('div');
-      tmp.innerHTML = html;
-      return tmp.textContent || tmp.innerText || '';
     }
   </script>
 </body>
