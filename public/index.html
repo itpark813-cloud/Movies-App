@@ -3,20 +3,46 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SevimliKino</title>
+  <title>SevimliKino - Онлайн Кинотеатр</title>
+  
+  <!-- Шрифты и Иконки -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Firebase SDK (v10) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // Конфигурация Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDummyKey_ReplaceWithYourFirebaseKey",
+      authDomain: "sevimlikino-app.firebaseapp.com",
+      projectId: "sevimlikino-app",
+      storageBucket: "sevimlikino-app.appspot.com",
+      messagingSenderId: "123456789",
+      appId: "1:123456789:web:abcdef123456"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    window.firebaseAuth = getAuth(app);
+    window.firebaseDB = getFirestore(app);
+    window.googleProvider = new GoogleAuthProvider();
+  </script>
+
   <style>
     :root {
-      --bg-primary: #0a0c10;
-      --bg-secondary: #141820;
-      --bg-card: #1c2230;
+      --bg-primary: #08090c;
+      --bg-secondary: #12151c;
+      --bg-card: #1a1e29;
       --accent: #e50914;
+      --accent-hover: #ff0f1a;
       --text-main: #f3f4f6;
       --text-muted: #9ca3af;
-      --border-color: rgba(255, 255, 255, 0.1);
+      --border-color: rgba(255, 255, 255, 0.12);
       --radius-md: 12px;
       --radius-lg: 20px;
     }
@@ -24,50 +50,67 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
     body { background: var(--bg-primary); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
 
-    /* Шапка */
+    /* Шапка сайта */
     .header {
       position: fixed; top: 0; left: 0; width: 100%; z-index: 1000;
-      background: rgba(10, 12, 16, 0.92); backdrop-filter: blur(12px); padding: 15px 4%;
+      background: rgba(8, 9, 12, 0.95); backdrop-filter: blur(16px); padding: 14px 4%;
       display: flex; align-items: center; justify-content: space-between; gap: 20px;
       border-bottom: 1px solid var(--border-color);
     }
 
-    .brand-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff; font-size: 1.5rem; font-weight: 800; cursor: pointer; }
+    .brand-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff; font-size: 1.6rem; font-weight: 900; cursor: pointer; user-select: none; }
     .brand-logo span { color: var(--accent); }
 
-    .search-form { position: relative; flex-grow: 1; max-width: 500px; }
+    .search-form { position: relative; flex-grow: 1; max-width: 480px; }
     .search-form input {
-      width: 100%; padding: 12px 16px 12px 45px; background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--border-color); border-radius: 30px; color: #fff; font-size: 0.95rem; outline: none;
+      width: 100%; padding: 11px 16px 11px 45px; background: rgba(255, 255, 255, 0.07);
+      border: 1px solid var(--border-color); border-radius: 30px; color: #fff; font-size: 0.95rem; outline: none; transition: 0.3s;
     }
     .search-form input:focus { border-color: var(--accent); background: rgba(255, 255, 255, 0.12); }
     .search-form i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
 
+    /* Панель пользователя */
+    .auth-nav { display: flex; align-items: center; gap: 15px; }
+    .btn-auth-open {
+      background: var(--accent); color: #fff; border: none; padding: 10px 22px; border-radius: 25px;
+      font-weight: 700; cursor: pointer; transition: 0.2s ease; display: flex; align-items: center; gap: 8px;
+    }
+    .btn-auth-open:hover { background: var(--accent-hover); transform: translateY(-2px); }
+
+    .user-profile-badge {
+      display: flex; align-items: center; gap: 12px; background: var(--bg-card); padding: 6px 14px 6px 8px;
+      border-radius: 30px; border: 1px solid var(--border-color);
+    }
+    .user-avatar {
+      width: 36px; height: 36px; border-radius: 50%; background: var(--accent);
+      display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; color: #fff;
+    }
+    .user-name { font-weight: 700; font-size: 0.9rem; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .btn-logout { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem; transition: 0.2s; }
+    .btn-logout:hover { color: var(--accent); }
+
     .container { padding: 100px 4% 60px; max-width: 1300px; margin: 0 auto; }
 
-    /* Переключение страниц */
     .page { display: none; }
     .page.active { display: block; }
 
-    /* Главная страница */
+    /* Секции кино */
     .section-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
-    
+
     .hero-card {
       display: flex; background: var(--bg-card); border-radius: var(--radius-lg); overflow: hidden;
       border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease;
       max-width: 900px; min-height: 350px;
     }
-    .hero-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(229, 9, 20, 0.2); border-color: var(--accent); }
-    .hero-thumb { width: 280px; flex-shrink: 0; position: relative; background: var(--bg-secondary); }
+    .hero-card:hover { transform: translateY(-4px); box-shadow: 0 15px 35px rgba(229, 9, 20, 0.25); border-color: var(--accent); }
+    .hero-thumb { width: 280px; flex-shrink: 0; background: var(--bg-secondary); }
     .hero-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .hero-info { padding: 30px; display: flex; flex-direction: column; justify-content: center; gap: 15px; flex-grow: 1; }
     .hero-badge { background: var(--accent); color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; width: fit-content; }
     .hero-title { font-size: 2rem; font-weight: 800; }
     .hero-meta { color: var(--text-muted); font-size: 0.9rem; display: flex; gap: 15px; }
     .hero-desc { color: var(--text-muted); line-height: 1.6; font-size: 0.95rem; }
-    .btn-watch { background: var(--accent); color: #fff; border: none; padding: 12px 24px; border-radius: 30px; font-weight: 700; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; width: fit-content; }
 
-    /* Сетка поиска */
     .movies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
     .movie-card { background: var(--bg-card); border-radius: var(--radius-md); overflow: hidden; cursor: pointer; transition: transform 0.3s ease; border: 1px solid transparent; }
     .movie-card:hover { transform: translateY(-5px); border-color: var(--accent); }
@@ -77,105 +120,167 @@
     .card-title { font-size: 0.95rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
 
-    /* Отдельная страница просмотра */
+    /* Плеер и детали */
     .back-btn { background: var(--bg-secondary); color: #fff; border: 1px solid var(--border-color); padding: 10px 20px; border-radius: 30px; cursor: pointer; font-weight: 600; margin-bottom: 20px; display: inline-flex; align-items: center; gap: 8px; }
     .back-btn:hover { background: rgba(255, 255, 255, 0.1); }
 
     .watch-container { max-width: 1000px; margin: 0 auto; }
     
-    /* Контейнер плеера */
     .player-wrapper {
       position: relative; width: 100%; background: #000; border-radius: var(--radius-lg); overflow: hidden;
       aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);
     }
-    .player-wrapper video { 
-      width: 100%; height: 100%; object-fit: contain; cursor: pointer;
-      image-rendering: -webkit-optimize-contrast;
-    }
-    .player-wrapper video.hd-enhance {
-      filter: contrast(1.06) saturate(1.1) brightness(1.02);
-    }
-    .player-wrapper iframe { width: 100%; height: 100%; border: none; }
+    .player-wrapper video { width: 100%; height: 100%; object-fit: contain; cursor: pointer; }
 
     /* Окно продолжения просмотра */
     .resume-modal {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+      background: rgba(0,0,0,0.88); backdrop-filter: blur(8px);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 20px; z-index: 10; color: #fff; text-align: center; padding: 20px;
     }
-    .resume-modal p { font-size: 1.2rem; font-weight: 600; }
-    .resume-modal span { color: var(--accent); font-weight: 800; }
     .resume-btns { display: flex; gap: 15px; }
-    .btn-resume { padding: 10px 22px; border-radius: 25px; border: none; font-weight: 700; cursor: pointer; transition: transform 0.2s; }
-    .btn-resume:hover { transform: scale(1.05); }
+    .btn-resume { padding: 10px 22px; border-radius: 25px; border: none; font-weight: 700; cursor: pointer; }
     .btn-resume.primary { background: var(--accent); color: #fff; }
     .btn-resume.secondary { background: rgba(255,255,255,0.2); color: #fff; }
 
-    /* Управление плеером */
+    /* Элементы управления плеером */
     .player-controls {
       position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.95));
-      padding: 20px; display: flex; flex-direction: column; gap: 10px; opacity: 0; transition: opacity 0.3s ease; z-index: 5;
+      padding: 20px; display: flex; flex-direction: column; gap: 12px; opacity: 0; transition: opacity 0.3s ease; z-index: 5;
     }
     .player-wrapper:hover .player-controls { opacity: 1; }
 
     .progress-bar-container { width: 100%; height: 6px; background: rgba(255,255,255,0.3); border-radius: 3px; cursor: pointer; }
     .progress-bar { height: 100%; background: var(--accent); width: 0%; border-radius: 3px; }
 
-    .controls-row { display: flex; align-items: center; justify-content: space-between; }
+    .controls-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     .controls-left, .controls-right { display: flex; align-items: center; gap: 15px; }
     .ctrl-btn { background: none; border: none; color: #fff; font-size: 1.1rem; cursor: pointer; transition: color 0.2s; position: relative; }
     .ctrl-btn:hover { color: var(--accent); }
     .time-display { font-size: 0.85rem; color: #d1d5db; font-variant-numeric: tabular-nums; }
 
-    /* Поп-апы (Яркость, Скорость) */
+    /* Ползунки звука и яркости */
+    .volume-box { display: flex; align-items: center; gap: 8px; }
+    .volume-slider, .bright-slider { width: 80px; accent-color: var(--accent); cursor: pointer; }
+
     .popover-wrapper { position: relative; }
     .popover-menu {
       position: absolute; bottom: 35px; left: 50%; transform: translateX(-50%);
       background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px;
       padding: 10px; display: none; flex-direction: column; gap: 6px; min-width: 110px; z-index: 20;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
     .popover-menu.active { display: flex; }
     .speed-opt { padding: 6px 12px; font-size: 0.85rem; cursor: pointer; border-radius: 4px; text-align: center; font-weight: 600; }
     .speed-opt:hover, .speed-opt.active { background: var(--accent); color: #fff; }
 
-    .bright-slider { width: 100px; accent-color: var(--accent); cursor: pointer; }
-
     .quality-btn {
-      background: rgba(255, 255, 255, 0.15); border: none; color: #fff; padding: 4px 8px; border-radius: 4px;
-      font-size: 0.75rem; font-weight: 800; cursor: pointer; transition: background 0.2s;
+      background: rgba(255, 255, 255, 0.15); border: none; color: #fff; padding: 5px 10px; border-radius: 4px;
+      font-size: 0.75rem; font-weight: 800; cursor: pointer; transition: 0.2s;
     }
     .quality-btn.active { background: #10b981; }
-
-    .speed-btn { background: rgba(255, 255, 255, 0.15); border: none; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
-    .speed-btn:hover { background: var(--accent); }
 
     .watch-details { margin-top: 25px; padding: 25px; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-color); }
     .watch-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 10px; }
     .watch-meta { display: flex; gap: 15px; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px; align-items: center; }
     .rating-tag { background: #e5a93c; color: #000; padding: 2px 8px; border-radius: 4px; font-weight: 800; }
-    .watch-desc { color: var(--text-main); line-height: 1.6; font-size: 0.95rem; }
+
+    .btn-trailer-search {
+      background: #c4302b; color: #fff; border: none; padding: 12px 24px; border-radius: 30px;
+      font-weight: 700; font-size: 0.95rem; cursor: pointer; display: inline-flex; align-items: center; gap: 10px;
+      transition: 0.2s; margin-top: 10px; text-decoration: none;
+    }
+    .btn-trailer-search:hover { background: #ff0000; transform: scale(1.03); }
+
+    /* МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
+      display: none; align-items: center; justify-content: center; z-index: 2000; opacity: 0; transition: opacity 0.3s ease;
+    }
+    .modal-overlay.active { display: flex; opacity: 1; }
+
+    .auth-card {
+      background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg);
+      width: 100%; max-width: 440px; padding: 35px 30px; position: relative; box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+      transform: scale(0.9); transition: transform 0.3s ease;
+    }
+    .modal-overlay.active .auth-card { transform: scale(1); }
+
+    .close-modal { position: absolute; top: 18px; right: 20px; background: none; border: none; color: var(--text-muted); font-size: 1.3rem; cursor: pointer; }
+    .close-modal:hover { color: #fff; }
+
+    .auth-tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 25px; }
+    .auth-tab { flex: 1; text-align: center; padding: 12px; font-weight: 700; color: var(--text-muted); cursor: pointer; transition: 0.2s; border-bottom: 2px solid transparent; }
+    .auth-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .auth-form { display: none; flex-direction: column; gap: 16px; }
+    .auth-form.active { display: flex; }
+
+    .input-group { display: flex; flex-direction: column; gap: 6px; }
+    .input-group label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
+    .input-group input {
+      padding: 12px 14px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color);
+      border-radius: 8px; color: #fff; font-size: 0.95rem; outline: none; transition: 0.2s;
+    }
+    .input-group input:focus { border-color: var(--accent); }
+
+    .btn-submit {
+      background: var(--accent); color: #fff; border: none; padding: 13px; border-radius: 8px;
+      font-weight: 700; font-size: 1rem; cursor: pointer; margin-top: 10px; transition: 0.2s;
+    }
+    .btn-submit:hover { background: var(--accent-hover); }
+
+    .auth-divider { text-align: center; margin: 20px 0; position: relative; font-size: 0.8rem; color: var(--text-muted); }
+    .auth-divider::before, .auth-divider::after { content: ''; position: absolute; top: 50%; width: 38%; height: 1px; background: var(--border-color); }
+    .auth-divider::before { left: 0; }
+    .auth-divider::after { right: 0; }
+
+    .btn-google {
+      width: 100%; background: #fff; color: #000; border: none; padding: 12px; border-radius: 8px;
+      font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: 0.2s;
+    }
+    .btn-google:hover { background: #e6e6e6; }
+    .btn-google svg { width: 18px; height: 18px; }
+
+    .auth-error { color: #f87171; font-size: 0.85rem; text-align: center; display: none; }
+
+    /* Уведомление Toasts */
+    .toast-msg {
+      position: fixed; bottom: 30px; right: 30px; background: #222; border-left: 4px solid var(--accent);
+      color: #fff; padding: 14px 22px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      z-index: 3000; display: none; font-weight: 600; font-size: 0.9rem;
+    }
 
     @media (max-width: 768px) {
       .hero-card { flex-direction: column; }
-      .hero-thumb { width: 100%; height: 300px; }
-      .header { flex-direction: column; }
-      .container { padding-top: 130px; }
+      .hero-thumb { width: 100%; height: 260px; }
+      .header { flex-direction: column; gap: 12px; }
+      .container { padding-top: 140px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- ХЕДЕР -->
+  <!-- ШАПКА -->
   <header class="header">
     <div class="brand-logo" id="logoBtn">
       <i class="fa-solid fa-play-circle" style="color: var(--accent)"></i> Sevimli<span>Kino</span>
     </div>
+
     <form class="search-form" id="searchForm">
       <i class="fa-solid fa-magnifying-glass"></i>
       <input type="text" id="searchInput" placeholder="Поиск фильма в каталоге..." autocomplete="off" />
     </form>
+
+    <div class="auth-nav">
+      <button class="btn-auth-open" id="openAuthBtn"><i class="fa-solid fa-user"></i> Войти</button>
+      <div class="user-profile-badge" id="userBadge" style="display: none;">
+        <div class="user-avatar" id="userInitial">U</div>
+        <span class="user-name" id="userNameDisplay">Пользователь</span>
+        <button class="btn-logout" id="logoutBtn" title="Выйти"><i class="fa-solid fa-right-from-bracket"></i></button>
+      </div>
+    </div>
   </header>
 
   <div class="container">
@@ -197,7 +302,7 @@
               <span><i class="fa-solid fa-star" style="color: #e5a93c"></i> <span id="spidermanRating">—</span></span>
             </div>
             <p class="hero-desc" id="spidermanDesc">Загружаем информацию о фильме Новый Человек-паук...</p>
-            <button class="btn-watch"><i class="fa-solid fa-play"></i> Смотреть сейчас</button>
+            <button class="btn-auth-open" style="width: fit-content;"><i class="fa-solid fa-play"></i> Смотреть сейчас</button>
           </div>
         </div>
       </div>
@@ -216,16 +321,14 @@
       <div class="watch-container">
         <div class="player-wrapper" id="playerContainer">
           
-          <!-- Окно запроса на продолжение просмотра -->
           <div class="resume-modal" id="resumeModal" style="display: none;">
-            <p>Вы остановились на <span id="resumeTimeText">00:00:00</span>.<br>Продолжить просмотр?</p>
+            <p>Вы остановились на <span id="resumeTimeText" style="color: var(--accent); font-weight: 800;">00:00:00</span>.<br>Продолжить просмотр?</p>
             <div class="resume-btns">
               <button class="btn-resume primary" id="resumeYesBtn">Продолжить</button>
               <button class="btn-resume secondary" id="resumeNoBtn">С начала</button>
             </div>
           </div>
 
-          <!-- Твоё видео (.mp4) -->
           <video id="videoElement" src="" style="display: none;"></video>
           
           <!-- Управление плеером -->
@@ -236,15 +339,18 @@
             <div class="controls-row">
               <div class="controls-left">
                 <button class="ctrl-btn" id="playPauseBtn"><i class="fa-solid fa-play" id="playIcon"></i></button>
-                <button class="ctrl-btn" id="muteBtn"><i class="fa-solid fa-volume-high" id="volumeIcon"></i></button>
+                
+                <div class="volume-box">
+                  <button class="ctrl-btn" id="muteBtn"><i class="fa-solid fa-volume-high" id="volumeIcon"></i></button>
+                  <input type="range" id="volumeSlider" class="volume-slider" min="0" max="2" step="0.05" value="1" title="Громкость (до 200%)" />
+                </div>
+
                 <span class="time-display" id="timeDisplay">00:00:00 / 00:00:00</span>
               </div>
               
               <div class="controls-right">
-                <!-- Улучшалка качества -->
-                <button class="quality-btn" id="qualityEnhanceBtn" title="Улучшить сочность и резкость">HD ULTRA</button>
+                <button class="quality-btn" id="qualityEnhanceBtn" title="Улучшить сочность картинки">HD ULTRA</button>
 
-                <!-- Регулировка яркости -->
                 <div class="popover-wrapper">
                   <button class="ctrl-btn" id="brightBtn" title="Яркость"><i class="fa-solid fa-sun"></i></button>
                   <div class="popover-menu" id="brightMenu">
@@ -252,9 +358,8 @@
                   </div>
                 </div>
 
-                <!-- Скорость воспроизведения -->
                 <div class="popover-wrapper">
-                  <button class="speed-btn" id="speedBtn">1x</button>
+                  <button class="ctrl-btn" id="speedBtn" style="font-weight: 800; font-size: 0.85rem;">1x</button>
                   <div class="popover-menu" id="speedMenu">
                     <div class="speed-opt" data-speed="0.5">0.5x</div>
                     <div class="speed-opt active" data-speed="1.0">1.0x (Норм)</div>
@@ -268,12 +373,8 @@
               </div>
             </div>
           </div>
-
-          <!-- Трейлер YouTube -->
-          <iframe id="trailerIframe" src="" style="display: none;" allow="autoplay; encrypted-media" allowfullscreen></iframe>
         </div>
 
-        <!-- Информация о фильме -->
         <div class="watch-details">
           <h1 class="watch-title" id="watchTitle">Загрузка...</h1>
           <div class="watch-meta">
@@ -282,18 +383,96 @@
             <span id="watchType" style="color: var(--accent); font-weight: 700;">Полный фильм</span>
           </div>
           <p class="watch-desc" id="watchDesc">Описание...</p>
+
+          <a href="#" id="trailerBtn" class="btn-trailer-search" target="_blank">
+            <i class="fa-brands fa-youtube"></i> Смотреть трейлер
+          </a>
         </div>
       </div>
     </div>
 
   </div>
 
+  <!-- МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ И РЕГИСТРАЦИИ -->
+  <div class="modal-overlay" id="authModal">
+    <div class="auth-card">
+      <button class="close-modal" id="closeAuthBtn"><i class="fa-solid fa-xmark"></i></button>
+      
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tabLoginBtn">Войти</div>
+        <div class="auth-tab" id="tabRegisterBtn">Регистрация</div>
+      </div>
+
+      <div class="auth-error" id="authErrorMsg"></div>
+
+      <!-- ФОРМА ВХОДА -->
+      <form class="auth-form active" id="loginForm">
+        <div class="input-group">
+          <label>Логин или Email</label>
+          <input type="text" id="loginEmailInput" placeholder="введите email" required />
+        </div>
+        <div class="input-group">
+          <label>Пароль</label>
+          <input type="password" id="loginPasswordInput" placeholder="••••••••" required />
+        </div>
+        <button type="submit" class="btn-submit">Войти в аккаунт</button>
+      </form>
+
+      <!-- ФОРМА РЕГИСТРАЦИИ -->
+      <form class="auth-form" id="registerForm">
+        <div class="input-group">
+          <label>Логин</label>
+          <input type="text" id="regLoginInput" placeholder="Придумайте логин" required />
+        </div>
+        <div class="input-group">
+          <label>Email</label>
+          <input type="email" id="regEmailInput" placeholder="example@mail.com" required />
+        </div>
+        <div class="input-group">
+          <label>Пароль (мин. 8 символов, цифры и буквы)</label>
+          <input type="password" id="regPasswordInput" placeholder="••••••••" required />
+        </div>
+        <div class="input-group">
+          <label>Подтвердите пароль</label>
+          <input type="password" id="regConfirmPasswordInput" placeholder="••••••••" required />
+        </div>
+        <button type="submit" class="btn-submit">Зарегистрироваться</button>
+      </form>
+
+      <!-- ФОРМА GOOGLE ПАРОЛЯ -->
+      <form class="auth-form" id="googlePasswordForm">
+        <p style="font-size: 0.9rem; color: var(--text-muted); text-align: center;" id="googleStepTitle">
+          Подтвердите ваш пароль от аккаунта
+        </p>
+        <div class="input-group">
+          <label>Пароль</label>
+          <input type="password" id="googlePasswordInput" placeholder="••••••••" required />
+        </div>
+        <div class="input-group" id="googleConfirmGroup" style="display: none;">
+          <label>Подтвердите пароль</label>
+          <input type="password" id="googleConfirmPasswordInput" placeholder="••••••••" />
+        </div>
+        <button type="submit" class="btn-submit" id="googleStepSubmitBtn">Продолжить</button>
+      </form>
+
+      <div id="googleAuthSection">
+        <div class="auth-divider">или</div>
+        <button class="btn-google" id="googleLoginBtn">
+          <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+          Войти с Google
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-msg" id="toastMsg"></div>
+
   <script>
     const API_KEY = '8c8e1a50-6322-4135-8875-5d40a5420d86';
     const API_FILM_URL = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/';
     const API_SEARCH_URL = 'https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=';
 
-    // Элементы
+    // Элементы UI
     const homePage = document.getElementById('homePage');
     const watchPage = document.getElementById('watchPage');
     const featuredSection = document.getElementById('featuredSection');
@@ -305,7 +484,7 @@
     const logoBtn = document.getElementById('logoBtn');
     const backBtn = document.getElementById('backBtn');
 
-    // Главная карточка
+    // Главный фильм
     const spidermanImg = document.getElementById('spidermanImg');
     const spidermanTitle = document.getElementById('spidermanTitle');
     const spidermanYear = document.getElementById('spidermanYear');
@@ -316,9 +495,6 @@
     const playerContainer = document.getElementById('playerContainer');
     const videoElem = document.getElementById('videoElement');
     const customControls = document.getElementById('customControls');
-    const trailerIframe = document.getElementById('trailerIframe');
-
-    // Кнопки и менюшки
     const playPauseBtn = document.getElementById('playPauseBtn');
     const playIcon = document.getElementById('playIcon');
     const progressBar = document.getElementById('progressBar');
@@ -326,6 +502,7 @@
     const timeDisplay = document.getElementById('timeDisplay');
     const muteBtn = document.getElementById('muteBtn');
     const volumeIcon = document.getElementById('volumeIcon');
+    const volumeSlider = document.getElementById('volumeSlider');
     const speedBtn = document.getElementById('speedBtn');
     const speedMenu = document.getElementById('speedMenu');
     const brightBtn = document.getElementById('brightBtn');
@@ -334,21 +511,45 @@
     const qualityEnhanceBtn = document.getElementById('qualityEnhanceBtn');
     const fullscreenBtn = document.getElementById('fullscreenBtn');
 
-    // Модалка продолжения
+    // Модалки и детали
     const resumeModal = document.getElementById('resumeModal');
     const resumeTimeText = document.getElementById('resumeTimeText');
     const resumeYesBtn = document.getElementById('resumeYesBtn');
     const resumeNoBtn = document.getElementById('resumeNoBtn');
-
-    // Детали на странице просмотра
     const watchTitle = document.getElementById('watchTitle');
     const watchYear = document.getElementById('watchYear');
     const watchRating = document.getElementById('watchRating');
     const watchType = document.getElementById('watchType');
     const watchDesc = document.getElementById('watchDesc');
+    const trailerBtn = document.getElementById('trailerBtn');
 
+    // Авторизация
+    const openAuthBtn = document.getElementById('openAuthBtn');
+    const closeAuthBtn = document.getElementById('closeAuthBtn');
+    const authModal = document.getElementById('authModal');
+    const userBadge = document.getElementById('userBadge');
+    const userInitial = document.getElementById('userInitial');
+    const userNameDisplay = document.getElementById('userNameDisplay');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    const tabLoginBtn = document.getElementById('tabLoginBtn');
+    const tabRegisterBtn = document.getElementById('tabRegisterBtn');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const googlePasswordForm = document.getElementById('googlePasswordForm');
+    const googleAuthSection = document.getElementById('googleAuthSection');
+    const authErrorMsg = document.getElementById('authErrorMsg');
+
+    // Переменные состояния
     let isFullMoviePlaying = false;
     let pendingResumeTime = 0;
+    let currentUser = null; // Хранит профиль авторизованного пользователя
+    let tempGoogleUser = null; // Временный Google профиль
+    let isNewGoogleUser = false;
+
+    // Web Audio Context для высокого уровня громкости (усиление до 200%)
+    let audioCtx = null;
+    let gainNode = null;
 
     let spidermanData = {
       title: "Новый Человек-паук",
@@ -360,6 +561,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       loadSpidermanFromApi();
+      initSavedUserSession();
 
       document.getElementById('mainMovieCard').addEventListener('click', () => {
         openWatchPage({
@@ -381,14 +583,16 @@
       logoBtn.addEventListener('click', showHomePage);
       backBtn.addEventListener('click', showHomePage);
 
+      // События плеера
       playPauseBtn.addEventListener('click', togglePlay);
       videoElem.addEventListener('click', togglePlay);
       videoElem.addEventListener('timeupdate', updateProgress);
       progressContainer.addEventListener('click', setProgress);
       muteBtn.addEventListener('click', toggleMute);
+      volumeSlider.addEventListener('input', handleVolumeChange);
       fullscreenBtn.addEventListener('click', toggleFullscreen);
 
-      // Выпадающее меню скорости
+      // Выпадающее меню скорости и яркости
       speedBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         brightMenu.classList.remove('active');
@@ -406,25 +610,24 @@
         });
       });
 
-      // Регулировка яркости
       brightBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         speedMenu.classList.remove('active');
         brightMenu.classList.toggle('active');
       });
 
-      brightSlider.addEventListener('input', (e) => {
-        const val = e.target.value;
-        applyVideoFilter(val);
-      });
+      brightSlider.addEventListener('input', updateVideoFilters);
 
-      // Улучшайзер видео
+      // Проверка авторизации при нажатии HD ULTRA
       qualityEnhanceBtn.addEventListener('click', () => {
-        videoElem.classList.toggle('hd-enhance');
+        if (!currentUser) {
+          showToast("Войдите в аккаунт, чтобы воспользоваться этой функцией!");
+          return;
+        }
         qualityEnhanceBtn.classList.toggle('active');
+        updateVideoFilters();
       });
 
-      // Закрытие менюшек при клике
       document.addEventListener('click', () => {
         speedMenu.classList.remove('active');
         brightMenu.classList.remove('active');
@@ -446,48 +649,286 @@
         playIcon.className = 'fa-solid fa-pause';
       });
 
-      // Клавиатура
+      // Авторизация события
+      openAuthBtn.addEventListener('click', openAuthModal);
+      closeAuthBtn.addEventListener('click', closeAuthModal);
+      logoutBtn.addEventListener('click', handleLogout);
+
+      tabLoginBtn.addEventListener('click', () => switchAuthTab('login'));
+      tabRegisterBtn.addEventListener('click', () => switchAuthTab('register'));
+
+      loginForm.addEventListener('submit', handleLoginSubmit);
+      registerForm.addEventListener('submit', handleRegisterSubmit);
+      googlePasswordForm.addEventListener('submit', handleGooglePasswordSubmit);
+      document.getElementById('googleLoginBtn').addEventListener('click', handleGoogleAuth);
+
       document.addEventListener('keydown', handleKeyPress);
     });
 
-    function handleKeyPress(e) {
-      if (!watchPage.classList.contains('active') || !isFullMoviePlaying) return;
-      if (document.activeElement.tagName === 'INPUT') return;
+    /* --- ФУНКЦИИ ФИЛЬТРОВ И ЗВУКА --- */
+    function updateVideoFilters() {
+      const brightness = brightSlider.value;
+      const isHd = qualityEnhanceBtn.classList.contains('active');
 
-      switch (e.code) {
-        case 'ArrowRight':
-          e.preventDefault();
-          videoElem.currentTime = Math.min(videoElem.duration, videoElem.currentTime + (e.repeat ? 25 : 10));
-          break;
-        case 'ArrowLeft':
-          e.preventDefault();
-          videoElem.currentTime = Math.max(0, videoElem.currentTime - (e.repeat ? 25 : 10));
-          break;
-        case 'ArrowUp':
-          e.preventDefault();
-          videoElem.volume = Math.min(1, videoElem.volume + 0.05);
-          updateVolumeIcon();
-          break;
-        case 'ArrowDown':
-          e.preventDefault();
-          videoElem.volume = Math.max(0, videoElem.volume - 0.05);
-          updateVolumeIcon();
-          break;
-        case 'Space':
-          e.preventDefault();
-          togglePlay();
-          break;
-        case 'KeyF':
-          e.preventDefault();
-          toggleFullscreen();
-          break;
+      if (isHd) {
+        videoElem.style.filter = `brightness(${brightness}) contrast(1.12) saturate(1.2)`;
+      } else {
+        videoElem.style.filter = `brightness(${brightness})`;
       }
     }
 
-    function applyVideoFilter(brightnessVal) {
-      videoElem.style.filter = `brightness(${brightnessVal})`;
+    function initAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioCtx.createMediaElementSource(videoElem);
+        gainNode = audioCtx.createGain();
+        source.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+      }
     }
 
+    function handleVolumeChange() {
+      initAudioContext();
+      const val = parseFloat(volumeSlider.value);
+      videoElem.volume = Math.min(1, val);
+      if (gainNode) {
+        gainNode.gain.value = val; // Усиление громкости до 200%
+      }
+      updateVolumeIcon();
+    }
+
+    /* --- АВТОРИЗАЦИЯ БЕЗОПАСНОСТИ И FIREBASE --- */
+    function validatePassword(pass) {
+      // Минимум 8 символов, хотя бы одна цифра и одна буква
+      const re = /^(?=.*[A-Za-zА-Яа-я])(?=.*\d).{8,}$/;
+      return re.test(pass);
+    }
+
+    function openAuthModal() {
+      authModal.classList.add('active');
+      authErrorMsg.style.display = 'none';
+      switchAuthTab('login');
+    }
+
+    function closeAuthModal() {
+      authModal.classList.remove('active');
+      tempGoogleUser = null;
+    }
+
+    function switchAuthTab(tab) {
+      authErrorMsg.style.display = 'none';
+      googlePasswordForm.classList.remove('active');
+      googleAuthSection.style.display = 'block';
+
+      if (tab === 'login') {
+        tabLoginBtn.classList.add('active');
+        tabRegisterBtn.classList.remove('active');
+        loginForm.classList.add('active');
+        registerForm.classList.remove('active');
+      } else {
+        tabRegisterBtn.classList.add('active');
+        tabLoginBtn.classList.remove('active');
+        registerForm.classList.add('active');
+        loginForm.classList.remove('active');
+      }
+    }
+
+    function showAuthError(msg) {
+      authErrorMsg.textContent = msg;
+      authErrorMsg.style.display = 'block';
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastMsg');
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 3500);
+    }
+
+    function setUserLoggedIn(user) {
+      currentUser = user;
+      localStorage.setItem('sevimli_user', JSON.stringify(user));
+      openAuthBtn.style.display = 'none';
+      userBadge.style.display = 'flex';
+      userNameDisplay.textContent = user.login || user.email.split('@')[0];
+      userInitial.textContent = (user.login || user.email)[0].toUpperCase();
+      closeAuthModal();
+      showToast(`Добро пожаловать, ${userNameDisplay.textContent}!`);
+    }
+
+    function handleLogout() {
+      currentUser = null;
+      localStorage.removeItem('sevimli_user');
+      if (window.firebaseAuth) signOut(window.firebaseAuth);
+      userBadge.style.display = 'none';
+      openAuthBtn.style.display = 'flex';
+      qualityEnhanceBtn.classList.remove('active');
+      updateVideoFilters();
+      showToast("Вы вышли из аккаунта");
+    }
+
+    function initSavedUserSession() {
+      const saved = localStorage.getItem('sevimli_user');
+      if (saved) {
+        try {
+          setUserLoggedIn(JSON.parse(saved));
+        } catch (e) {
+          localStorage.removeItem('sevimli_user');
+        }
+      }
+    }
+
+    // Вход по Логину/Паролю
+    function handleLoginSubmit(e) {
+      e.preventDefault();
+      const loginEmail = document.getElementById('loginEmailInput').value.trim();
+      const pass = document.getElementById('loginPasswordInput').value;
+
+      const usersDb = JSON.parse(localStorage.getItem('sevimli_local_db') || '{}');
+      const user = Object.values(usersDb).find(u => u.email === loginEmail || u.login === loginEmail);
+
+      if (user && user.password === pass) {
+        setUserLoggedIn(user);
+      } else {
+        showAuthError("Неверный логин/email или пароль!");
+      }
+    }
+
+    // Регистрация нового аккаунта
+    function handleRegisterSubmit(e) {
+      e.preventDefault();
+      const login = document.getElementById('regLoginInput').value.trim();
+      const email = document.getElementById('regEmailInput').value.trim();
+      const pass = document.getElementById('regPasswordInput').value;
+      const confirmPass = document.getElementById('regConfirmPasswordInput').value;
+
+      if (pass !== confirmPass) {
+        showAuthError("Пароли не совпадают!");
+        return;
+      }
+
+      if (!validatePassword(pass)) {
+        showAuthError("Пароль должен быть минимум 8 символов и содержать цифры и буквы!");
+        return;
+      }
+
+      const usersDb = JSON.parse(localStorage.getItem('sevimli_local_db') || '{}');
+      if (Object.values(usersDb).some(u => u.email === email || u.login === login)) {
+        showAuthError("Пользователь с таким email или логином уже существует!");
+        return;
+      }
+
+      const newUser = { login, email, password: pass };
+      usersDb[email] = newUser;
+      localStorage.setItem('sevimli_local_db', JSON.stringify(usersDb));
+
+      // Если подключен Firebase Firestore — сохраняем туда
+      if (window.firebaseDB) {
+        setDoc(doc(window.firebaseDB, "users", email), { login, email, password: pass }).catch(()=>{});
+      }
+
+      setUserLoggedIn(newUser);
+    }
+
+    /* GOOGLE АВТОРИЗАЦИЯ С ОБЯЗАТЕЛЬНОЙ ПРОВЕРКОЙ ПАРОЛЯ */
+    async function handleGoogleAuth() {
+      authErrorMsg.style.display = 'none';
+
+      if (!window.firebaseAuth) {
+        // Запасной локальный симулятор если Firebase API ключ не заменен пользователем
+        simulateGoogleAuth();
+        return;
+      }
+
+      try {
+        const result = await signInWithPopup(window.firebaseAuth, window.googleProvider);
+        const gUser = result.user;
+        await processGoogleUserData(gUser.email, gUser.displayName);
+      } catch (err) {
+        simulateGoogleAuth();
+      }
+    }
+
+    function simulateGoogleAuth() {
+      // Имитация входа через Google
+      const mockEmail = "google_user@gmail.com";
+      const mockName = "GoogleUser";
+      processGoogleUserData(mockEmail, mockName);
+    }
+
+    async function processGoogleUserData(email, name) {
+      tempGoogleUser = { email, login: name || email.split('@')[0] };
+
+      // Проверяем наличие аккаунта в базе
+      let usersDb = JSON.parse(localStorage.getItem('sevimli_local_db') || '{}');
+      let existingUser = usersDb[email];
+
+      if (window.firebaseDB) {
+        try {
+          const docSnap = await getDoc(doc(window.firebaseDB, "users", email));
+          if (docSnap.exists()) existingUser = docSnap.data();
+        } catch(e) {}
+      }
+
+      loginForm.classList.remove('active');
+      registerForm.classList.remove('active');
+      googleAuthSection.style.display = 'none';
+      googlePasswordForm.classList.add('active');
+
+      if (existingUser) {
+        // Аккаунт есть -> запрашиваем пароль
+        isNewGoogleUser = false;
+        document.getElementById('googleStepTitle').textContent = "Введите установленный пароль аккаунта";
+        document.getElementById('googleConfirmGroup').style.display = 'none';
+      } else {
+        // Аккаунт НЕ создан -> просим создать и подтвердить пароль
+        isNewGoogleUser = true;
+        document.getElementById('googleStepTitle').textContent = "Создайте пароль для завершения регистрации";
+        document.getElementById('googleConfirmGroup').style.display = 'flex';
+      }
+    }
+
+    function handleGooglePasswordSubmit(e) {
+      e.preventDefault();
+      const pass = document.getElementById('googlePasswordInput').value;
+      const confirmPass = document.getElementById('googleConfirmPasswordInput').value;
+
+      if (!tempGoogleUser) return;
+
+      let usersDb = JSON.parse(localStorage.getItem('sevimli_local_db') || '{}');
+
+      if (isNewGoogleUser) {
+        if (pass !== confirmPass) {
+          showAuthError("Пароли не совпадают!");
+          return;
+        }
+        if (!validatePassword(pass)) {
+          showAuthError("Пароль должен быть минимум 8 символов и содержать цифры и буквы!");
+          return;
+        }
+
+        // Только теперь создаем аккаунт!
+        tempGoogleUser.password = pass;
+        usersDb[tempGoogleUser.email] = tempGoogleUser;
+        localStorage.setItem('sevimli_local_db', JSON.stringify(usersDb));
+
+        if (window.firebaseDB) {
+          setDoc(doc(window.firebaseDB, "users", tempGoogleUser.email), tempGoogleUser).catch(()=>{});
+        }
+
+        setUserLoggedIn(tempGoogleUser);
+      } else {
+        // Проверяем введенный пароль
+        const existingUser = usersDb[tempGoogleUser.email];
+        if (existingUser && existingUser.password === pass) {
+          setUserLoggedIn(existingUser);
+        } else {
+          showAuthError("Неверный пароль аккаунта!");
+        }
+      }
+    }
+
+    /* --- ПОИСК КИНО И ПЛЕЕР --- */
     async function loadSpidermanFromApi() {
       try {
         const res = await fetch(API_SEARCH_URL + encodeURIComponent('Новый Человек-паук'), {
@@ -497,7 +938,6 @@
 
         if (data.films && data.films.length > 0) {
           const film = data.films[0];
-
           spidermanData.title = film.nameRu || film.nameEn || "Новый Человек-паук";
           spidermanData.year = film.year || "2012";
           spidermanData.rating = film.rating || "6.9";
@@ -515,7 +955,7 @@
           spidermanDesc.textContent = spidermanData.desc;
         }
       } catch (err) {
-        console.error("Ошибка автопоиска Человека-паука:", err);
+        console.error("Ошибка автопоиска:", err);
       }
     }
 
@@ -525,7 +965,7 @@
       stopVideo();
     }
 
-    async function openWatchPage(movie) {
+    function openWatchPage(movie) {
       homePage.classList.remove('active');
       watchPage.classList.add('active');
       window.scrollTo(0, 0);
@@ -535,17 +975,18 @@
       watchRating.textContent = movie.rating || 'N/A';
       watchDesc.textContent = movie.desc || 'Описание отсутствует.';
 
+      // Настройка кнопки Трейлера в Google
+      trailerBtn.href = `https://www.google.com/search?q=${encodeURIComponent('смотреть трейлер ' + movie.title)}`;
+
       stopVideo();
 
       if (movie.isFullMovie) {
         isFullMoviePlaying = true;
         watchType.textContent = "Полный фильм";
         watchType.style.color = "var(--accent)";
-        
-        trailerIframe.style.display = 'none';
+
         videoElem.style.display = 'block';
         customControls.style.display = 'flex';
-
         videoElem.src = movie.videoUrl;
 
         const savedTime = parseFloat(localStorage.getItem('spiderman_saved_time'));
@@ -559,76 +1000,16 @@
         }
       } else {
         isFullMoviePlaying = false;
-        watchType.textContent = "Трейлер";
+        watchType.textContent = "Трейлер недоступен напрямую";
         watchType.style.color = "#e5a93c";
-
         videoElem.style.display = 'none';
         customControls.style.display = 'none';
-        
-        fetchTrailerForFilm(movie);
       }
-    }
-
-    // 100% УМНЫЙ ПОИСК ТРЕЙЛЕРОВ
-    async function fetchTrailerForFilm(movie) {
-      trailerIframe.style.display = 'none';
-      let trailerFound = false;
-
-      // 1. Пробуем получить трейлер через Kinopoisk API
-      if (movie.filmId) {
-        try {
-          const detailRes = await fetch(API_FILM_URL + movie.filmId, {
-            headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' }
-          });
-          const detailData = await detailRes.json();
-          if (detailData.description) watchDesc.textContent = detailData.description;
-
-          const videoRes = await fetch(`${API_FILM_URL}${movie.filmId}/videos`, {
-            headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' }
-          });
-          const videoData = await videoRes.json();
-
-          if (videoData.items && videoData.items.length > 0) {
-            for (let item of videoData.items) {
-              const ytId = extractYouTubeId(item.url);
-              if (ytId) {
-                trailerIframe.src = `https://www.youtube.com/embed/${ytId}?autoplay=1`;
-                trailerIframe.style.display = 'block';
-                trailerFound = true;
-                break;
-              } else if (item.url && item.url.includes('widgets.kinopoisk.ru')) {
-                trailerIframe.src = item.url;
-                trailerIframe.style.display = 'block';
-                trailerFound = true;
-                break;
-              }
-            }
-          }
-        } catch (err) {
-          console.warn("Кинопоиск API не выдал трейлер, переключаемся на YouTube Search Embed", err);
-        }
-      }
-
-      // 2. Если Кинопоиск не нашел — 100% ГАРАНТИРОВАННЫЙ ПОИСК В YOUTUBE!
-      if (!trailerFound) {
-        const searchQuery = encodeURIComponent((movie.title || "Фильм") + " трейлер на русском");
-        trailerIframe.src = `https://www.youtube.com/embed?listType=search&list=${searchQuery}&autoplay=1`;
-        trailerIframe.style.display = 'block';
-      }
-    }
-
-    // Извлечение ID из любых ссылок YouTube
-    function extractYouTubeId(url) {
-      if (!url) return null;
-      const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-      const match = url.match(regExp);
-      return (match && match[1]) ? match[1] : null;
     }
 
     function stopVideo() {
       videoElem.pause();
       videoElem.src = '';
-      trailerIframe.src = '';
       resumeModal.style.display = 'none';
       isFullMoviePlaying = false;
     }
@@ -646,7 +1027,7 @@
         const data = await res.json();
         renderSearchResults(data.films || []);
       } catch (err) {
-        searchGrid.innerHTML = '<p style="color: var(--text-muted)">Ошибка загрузки поиска</p>';
+        searchGrid.innerHTML = '<p style="color: var(--text-muted)">Ошибка загрузки</p>';
       }
     }
 
@@ -676,7 +1057,7 @@
             title: movie.nameRu || movie.nameEn,
             year: movie.year,
             rating: movie.rating,
-            desc: movie.description || "Загрузка полных данных...",
+            desc: movie.description || "Нажмите «Смотреть трейлер», чтобы перейти к видео на Google/YouTube.",
             isFullMovie: false
           });
         });
@@ -686,6 +1067,7 @@
     }
 
     function togglePlay() {
+      initAudioContext();
       if (videoElem.paused) {
         videoElem.play();
         playIcon.className = 'fa-solid fa-pause';
@@ -700,17 +1082,14 @@
       const h = Math.floor(seconds / 3600);
       const m = Math.floor((seconds % 3600) / 60);
       const s = Math.floor(seconds % 60);
-
       const pad = num => String(num).padStart(2, '0');
       return `${pad(h)}:${pad(m)}:${pad(s)}`;
     }
 
     function updateProgress() {
       if (!videoElem.duration) return;
-
       const percent = (videoElem.currentTime / videoElem.duration) * 100;
       progressBar.style.width = percent + '%';
-
       timeDisplay.textContent = `${formatTime(videoElem.currentTime)} / ${formatTime(videoElem.duration)}`;
 
       if (isFullMoviePlaying && videoElem.currentTime > 5) {
@@ -730,9 +1109,9 @@
     }
 
     function updateVolumeIcon() {
-      if (videoElem.muted || videoElem.volume === 0) {
+      if (videoElem.muted || volumeSlider.value == 0) {
         volumeIcon.className = 'fa-solid fa-volume-xmark';
-      } else if (videoElem.volume < 0.5) {
+      } else if (volumeSlider.value < 0.6) {
         volumeIcon.className = 'fa-solid fa-volume-low';
       } else {
         volumeIcon.className = 'fa-solid fa-volume-high';
@@ -744,6 +1123,30 @@
         playerContainer.requestFullscreen().catch(err => alert(err.message));
       } else {
         document.exitFullscreen();
+      }
+    }
+
+    function handleKeyPress(e) {
+      if (!watchPage.classList.contains('active') || !isFullMoviePlaying) return;
+      if (document.activeElement.tagName === 'INPUT') return;
+
+      switch (e.code) {
+        case 'ArrowRight':
+          e.preventDefault();
+          videoElem.currentTime = Math.min(videoElem.duration, videoElem.currentTime + 10);
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          videoElem.currentTime = Math.max(0, videoElem.currentTime - 10);
+          break;
+        case 'Space':
+          e.preventDefault();
+          togglePlay();
+          break;
+        case 'KeyF':
+          e.preventDefault();
+          toggleFullscreen();
+          break;
       }
     }
   </script>
