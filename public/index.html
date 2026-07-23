@@ -55,12 +55,12 @@
     .hero-card {
       display: flex; background: var(--bg-card); border-radius: var(--radius-lg); overflow: hidden;
       border: 1px solid var(--border-color); cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease;
-      max-width: 900px;
+      max-width: 900px; min-height: 350px;
     }
     .hero-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(229, 9, 20, 0.2); border-color: var(--accent); }
-    .hero-thumb { width: 300px; flex-shrink: 0; position: relative; }
+    .hero-thumb { width: 280px; flex-shrink: 0; position: relative; background: var(--bg-secondary); }
     .hero-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .hero-info { padding: 30px; display: flex; flex-direction: column; justify-content: center; gap: 15px; }
+    .hero-info { padding: 30px; display: flex; flex-direction: column; justify-content: center; gap: 15px; flex-grow: 1; }
     .hero-badge { background: var(--accent); color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; width: fit-content; }
     .hero-title { font-size: 2rem; font-weight: 800; }
     .hero-meta { color: var(--text-muted); font-size: 0.9rem; display: flex; gap: 15px; }
@@ -83,13 +83,21 @@
 
     .watch-container { max-width: 1000px; margin: 0 auto; }
     
-    /* Кастомный плеер */
+    /* Контейнер плеера */
     .player-wrapper {
       position: relative; width: 100%; background: #000; border-radius: var(--radius-lg); overflow: hidden;
       aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);
     }
     .player-wrapper video { width: 100%; height: 100%; object-fit: contain; cursor: pointer; }
     .player-wrapper iframe { width: 100%; height: 100%; border: none; }
+
+    /* Сообщение об отсутствии трейлера */
+    .no-trailer-box {
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px; color: var(--text-muted); text-align: center; padding: 20px;
+    }
+    .no-trailer-box i { font-size: 3rem; color: var(--accent); }
+    .no-trailer-box p { font-size: 1.2rem; font-weight: 700; color: #fff; }
 
     .player-controls {
       position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.9));
@@ -106,19 +114,18 @@
     .ctrl-btn:hover { color: var(--accent); }
     .time-display { font-size: 0.85rem; color: var(--text-muted); }
 
-    /* Скорость воспроизведения */
     .speed-btn { background: rgba(255, 255, 255, 0.15); border: none; color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
     .speed-btn:hover { background: var(--accent); }
 
     .watch-details { margin-top: 25px; padding: 25px; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-color); }
     .watch-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 10px; }
-    .watch-meta { display: flex; gap: 15px; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px; }
+    .watch-meta { display: flex; gap: 15px; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px; align-items: center; }
     .rating-tag { background: #e5a93c; color: #000; padding: 2px 8px; border-radius: 4px; font-weight: 800; }
     .watch-desc { color: var(--text-main); line-height: 1.6; font-size: 0.95rem; }
 
     @media (max-width: 768px) {
       .hero-card { flex-direction: column; }
-      .hero-thumb { width: 100%; height: 250px; }
+      .hero-thumb { width: 100%; height: 300px; }
       .header { flex-direction: column; }
       .container { padding-top: 130px; }
     }
@@ -139,53 +146,46 @@
 
   <div class="container">
     
-    <!-- СТРАНИЦА 1: ГЛАВНАЯ / ПОИСК -->
+    <!-- ГЛАВНАЯ СТРАНИЦА -->
     <div id="homePage" class="page active">
-      
-      <!-- Секция главного фильма (когда нет поиска) -->
       <div id="featuredSection">
         <h1 class="section-title"><i class="fa-solid fa-star" style="color: var(--accent)"></i> Доступно для просмотра</h1>
         
         <div class="hero-card" id="mainMovieCard">
           <div class="hero-thumb">
-            <img src="https://m.media-amazon.com/images/M/MVBOTA5NDYyOTItAGMyMS00MDVhLWI4YjItM2RjN2FlM2I4MmI3XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg" alt="Новый Человек-паук" />
+            <img id="spidermanImg" src="" alt="Новый Человек-паук" />
           </div>
           <div class="hero-info">
             <span class="hero-badge">Полный фильм</span>
-            <h2 class="hero-title">Новый Человек-Паук</h2>
+            <h2 class="hero-title" id="spidermanTitle">Загрузка...</h2>
             <div class="hero-meta">
-              <span>2012</span>
-              <span><i class="fa-solid fa-star" style="color: #e5a93c"></i> 6.9</span>
-              <span>2 ч 16 мин</span>
+              <span id="spidermanYear">—</span>
+              <span><i class="fa-solid fa-star" style="color: #e5a93c"></i> <span id="spidermanRating">—</span></span>
             </div>
-            <p class="hero-desc">
-              В детстве Питер Паркер был оставлен своими родителями, которые отдали его на воспитание дяде и тете. Шли годы, Питер был обычным школьником, пока не попал в лабораторию Oscorp, где его кусает генетически измененный паук...
-            </p>
+            <p class="hero-desc" id="spidermanDesc">Загрузка описания из Кинопоиска...</p>
             <button class="btn-watch"><i class="fa-solid fa-play"></i> Смотреть сейчас</button>
           </div>
         </div>
       </div>
 
-      <!-- Секция результатов поиска -->
+      <!-- СЕКЦИЯ ПОИСКА -->
       <div id="searchSection" style="display: none;">
         <h1 class="section-title" id="searchTitle"><i class="fa-solid fa-magnifying-glass" style="color: var(--accent)"></i> Результаты поиска</h1>
         <div class="movies-grid" id="searchGrid"></div>
       </div>
-
     </div>
 
-    <!-- СТРАНИЦА 2: СТРАНИЦА ПРОСМОТРА (WATCH PAGE) -->
+    <!-- СТРАНИЦА ПРОСМОТРА -->
     <div id="watchPage" class="page">
       <button class="back-btn" id="backBtn"><i class="fa-solid fa-arrow-left"></i> Назад к каталогу</button>
 
       <div class="watch-container">
-        <!-- Плеер (Кастомный для видео или iframe для трейлеров) -->
         <div class="player-wrapper" id="playerContainer">
           
-          <!-- Элемент нашего видео -->
+          <!-- Твоё видео (.mp4) -->
           <video id="videoElement" src="" style="display: none;"></video>
           
-          <!-- Органы управления нашими видеофайлами -->
+          <!-- Органы управления плеером -->
           <div class="player-controls" id="customControls" style="display: none;">
             <div class="progress-bar-container" id="progressContainer">
               <div class="progress-bar" id="progressBar"></div>
@@ -197,26 +197,32 @@
                 <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
               </div>
               <div class="controls-right">
-                <!-- Изменение скорости -->
                 <button class="speed-btn" id="speedBtn">1x</button>
                 <button class="ctrl-btn" id="fullscreenBtn"><i class="fa-solid fa-expand"></i></button>
               </div>
             </div>
           </div>
 
-          <!-- Контейнер для YouTube трейлера -->
-          <iframe id="trailerIframe" src="" style="display: none;" allowfullscreen></iframe>
+          <!-- Трейлер YouTube -->
+          <iframe id="trailerIframe" src="" style="display: none;" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+
+          <!-- Сообщение, если трейлер не найден -->
+          <div class="no-trailer-box" id="noTrailerBox">
+            <i class="fa-solid fa-video-slash"></i>
+            <p>Трейлер не найден</p>
+            <span style="font-size: 0.85rem;">Для этого фильма нет доступного видеоролика</span>
+          </div>
         </div>
 
         <!-- Информация о фильме -->
         <div class="watch-details">
-          <h1 class="watch-title" id="watchTitle">Название фильма</h1>
+          <h1 class="watch-title" id="watchTitle">Загрузка...</h1>
           <div class="watch-meta">
-            <span id="watchYear">2026</span>
-            <span class="rating-tag" id="watchRating">7.5</span>
-            <span id="watchType" style="color: var(--accent); font-weight: 700;">Полная версия</span>
+            <span id="watchYear">—</span>
+            <span class="rating-tag" id="watchRating">—</span>
+            <span id="watchType" style="color: var(--accent); font-weight: 700;">Полный фильм</span>
           </div>
-          <p class="watch-desc" id="watchDesc">Описание фильма...</p>
+          <p class="watch-desc" id="watchDesc">Описание...</p>
         </div>
       </div>
     </div>
@@ -225,9 +231,10 @@
 
   <script>
     const API_KEY = '8c8e1a50-6322-4135-8875-5d40a5420d86';
-    const API_URL_SEARCH = 'https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=';
+    const API_FILM_URL = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/';
+    const API_SEARCH_URL = 'https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=';
 
-    // Элементы страниц
+    // Элементы страницы
     const homePage = document.getElementById('homePage');
     const watchPage = document.getElementById('watchPage');
     const featuredSection = document.getElementById('featuredSection');
@@ -239,11 +246,21 @@
     const logoBtn = document.getElementById('logoBtn');
     const backBtn = document.getElementById('backBtn');
 
-    // Элементы плеера
+    // Элементы Человека-паука на главной
+    const spidermanImg = document.getElementById('spidermanImg');
+    const spidermanTitle = document.getElementById('spidermanTitle');
+    const spidermanYear = document.getElementById('spidermanYear');
+    const spidermanRating = document.getElementById('spidermanRating');
+    const spidermanDesc = document.getElementById('spidermanDesc');
+
+    // Плеер
     const playerContainer = document.getElementById('playerContainer');
     const videoElem = document.getElementById('videoElement');
     const customControls = document.getElementById('customControls');
     const trailerIframe = document.getElementById('trailerIframe');
+    const noTrailerBox = document.getElementById('noTrailerBox');
+
+    // Кнопки управления
     const playPauseBtn = document.getElementById('playPauseBtn');
     const playIcon = document.getElementById('playIcon');
     const progressBar = document.getElementById('progressBar');
@@ -254,20 +271,20 @@
     const speedBtn = document.getElementById('speedBtn');
     const fullscreenBtn = document.getElementById('fullscreenBtn');
 
-    // Информация на странице просмотра
+    // Детали фильма
     const watchTitle = document.getElementById('watchTitle');
     const watchYear = document.getElementById('watchYear');
     const watchRating = document.getElementById('watchRating');
     const watchType = document.getElementById('watchType');
     const watchDesc = document.getElementById('watchDesc');
 
-    // Данные нашего единственного готового фильма
-    const mainMovie = {
-      title: "Новый Человек-Паук",
+    // Главный фильм (Человек-паук)
+    let spidermanData = {
+      title: "Новый Человек-паук",
       year: "2012",
       rating: "6.9",
-      desc: "В детстве Питер Паркер был оставлен своими родителями, которые отдали его на воспитание дяде и тете. Шли годы, Питер был обычным школьником, пока не попал в лабораторию Oscorp, где его кусает генетически измененный паук...",
-      // Вставь сюда прямую ссылку на твой .mp4 файл из GitHub Releases или хостинга
+      desc: "",
+      // Твоя прямая ссылка на видеофайл .mp4
       videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
     };
 
@@ -275,20 +292,22 @@
     let currentSpeedIndex = 1;
 
     document.addEventListener('DOMContentLoaded', () => {
-      
-      // Клик по главному фильму
+      // 1. Загружаем данные Человека-паука из API (ID 6039)
+      loadSpidermanFromApi();
+
+      // 2. Клик по карточке Человека-паука
       document.getElementById('mainMovieCard').addEventListener('click', () => {
         openWatchPage({
-          title: mainMovie.title,
-          year: mainMovie.year,
-          rating: mainMovie.rating,
-          desc: mainMovie.desc,
-          videoUrl: mainMovie.videoUrl,
+          title: spidermanData.title,
+          year: spidermanData.year,
+          rating: spidermanData.rating,
+          desc: spidermanData.desc,
+          videoUrl: spidermanData.videoUrl,
           isFullMovie: true
         });
       });
 
-      // Поиск по API
+      // Поиск
       searchForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const query = searchInput.value.trim();
@@ -298,7 +317,7 @@
       logoBtn.addEventListener('click', showHomePage);
       backBtn.addEventListener('click', showHomePage);
 
-      // Логика плеера
+      // Плеер
       playPauseBtn.addEventListener('click', togglePlay);
       videoElem.addEventListener('click', togglePlay);
       videoElem.addEventListener('timeupdate', updateProgress);
@@ -308,14 +327,39 @@
       fullscreenBtn.addEventListener('click', toggleFullscreen);
     });
 
-    // Навигация между "страницами"
+    // Получение данных Человека-паука из API
+    async function loadSpidermanFromApi() {
+      try {
+        const res = await fetch(API_FILM_URL + '6039', {
+          headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        
+        spidermanData.title = data.nameRu || data.nameOriginal || "Новый Человек-паук";
+        spidermanData.year = data.year || "2012";
+        spidermanData.rating = data.ratingKinopoisk || data.rating || "6.9";
+        spidermanData.desc = data.description || "В детстве Питер Паркер был оставлен своими родителями...";
+
+        spidermanImg.src = data.posterUrl || data.posterUrlPreview;
+        spidermanTitle.textContent = spidermanData.title;
+        spidermanYear.textContent = spidermanData.year;
+        spidermanRating.textContent = spidermanData.rating;
+        spidermanDesc.textContent = spidermanData.desc;
+      } catch (err) {
+        console.error("Ошибка загрузки данных Человека-паука:", err);
+        spidermanTitle.textContent = "Новый Человек-паук";
+        spidermanDesc.textContent = "Не удалось загрузить описание из сети.";
+      }
+    }
+
     function showHomePage() {
       watchPage.classList.remove('active');
       homePage.classList.add('active');
       stopVideo();
     }
 
-    function openWatchPage(movie) {
+    // Открытие страницы просмотра
+    async function openWatchPage(movie) {
       homePage.classList.remove('active');
       watchPage.classList.add('active');
       window.scrollTo(0, 0);
@@ -328,37 +372,96 @@
       stopVideo();
 
       if (movie.isFullMovie) {
-        // Показываем наш кастомный видеоплеер
+        // Запуск твоего .mp4 видео
         watchType.textContent = "Полный фильм";
         watchType.style.color = "var(--accent)";
+        
         trailerIframe.style.display = 'none';
+        noTrailerBox.style.display = 'none';
         videoElem.style.display = 'block';
         customControls.style.display = 'flex';
-        
+
         videoElem.src = movie.videoUrl;
         videoElem.play();
         playIcon.className = 'fa-solid fa-pause';
       } else {
-        // Показываем трейлер для незагруженных фильмов из API
-        watchType.textContent = "Трейлер / Тизер";
+        // Загрузка трейлера из Кинопоиска
+        watchType.textContent = "Трейлер";
         watchType.style.color = "#e5a93c";
+
         videoElem.style.display = 'none';
         customControls.style.display = 'none';
-        trailerIframe.style.display = 'block';
-
-        // Ищем трейлер на YouTube по названию
-        const youtubeSearchUrl = `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(movie.title + ' трейлер')}`;
-        trailerIframe.src = youtubeSearchUrl;
+        
+        // Получаем детальную информацию и трейлер через API
+        fetchTrailerForFilm(movie.filmId, movie.title);
       }
+    }
+
+    // Загрузка реального трейлера через API Кинопоиска
+    async function fetchTrailerForFilm(filmId, fallbackTitle) {
+      trailerIframe.style.display = 'none';
+      noTrailerBox.style.display = 'none';
+
+      try {
+        // 1. Подгружаем полное описание фильма, если его не было
+        const detailRes = await fetch(API_FILM_URL + filmId, {
+          headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' }
+        });
+        const detailData = await detailRes.json();
+        if (detailData.description) watchDesc.textContent = detailData.description;
+
+        // 2. Запрашиваем списки видео к фильму
+        const videoRes = await fetch(`${API_FILM_URL}${filmId}/videos`, {
+          headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' }
+        });
+        const videoData = await videoRes.json();
+
+        let youtubeUrl = null;
+        if (videoData.items && videoData.items.length > 0) {
+          // Ищем ролик с YouTube
+          const ytItem = videoData.items.find(v => v.site === 'YOUTUBE' || (v.url && v.url.includes('youtube')));
+          if (ytItem) youtubeUrl = ytItem.url;
+        }
+
+        if (youtubeUrl) {
+          const ytId = extractYouTubeId(youtubeUrl);
+          if (ytId) {
+            trailerIframe.src = `https://www.youtube.com/embed/${ytId}?autoplay=1`;
+            trailerIframe.style.display = 'block';
+            return;
+          }
+        }
+
+        // Если ролик не найден в базе
+        showNoTrailer();
+
+      } catch (err) {
+        console.error("Ошибка загрузки трейлера:", err);
+        showNoTrailer();
+      }
+    }
+
+    function showNoTrailer() {
+      trailerIframe.style.display = 'none';
+      noTrailerBox.style.display = 'flex';
+    }
+
+    // Извлечение ID видео из ссылок YouTube
+    function extractYouTubeId(url) {
+      if (!url) return null;
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = url.match(regExp);
+      return (match && match[2].length === 11) ? match[2] : null;
     }
 
     function stopVideo() {
       videoElem.pause();
       videoElem.src = '';
       trailerIframe.src = '';
+      noTrailerBox.style.display = 'none';
     }
 
-    // Поиск через Кинопоиск API
+    // Поиск фильмов
     async function fetchSearch(query) {
       featuredSection.style.display = 'none';
       searchSection.style.display = 'block';
@@ -366,7 +469,7 @@
       searchGrid.innerHTML = '<p style="color: var(--text-muted)">Загрузка...</p>';
 
       try {
-        const res = await fetch(API_URL_SEARCH + encodeURIComponent(query), {
+        const res = await fetch(API_SEARCH_URL + encodeURIComponent(query), {
           headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' }
         });
         const data = await res.json();
@@ -398,10 +501,11 @@
 
         card.addEventListener('click', () => {
           openWatchPage({
+            filmId: movie.filmId,
             title: movie.nameRu || movie.nameEn,
             year: movie.year,
             rating: movie.rating,
-            desc: movie.description || "Официальное описание фильма из базы данных Кинопоиска.",
+            desc: movie.description || "Загрузка полного описания...",
             isFullMovie: false
           });
         });
@@ -410,7 +514,7 @@
       });
     }
 
-    // Управление кастомным плеером
+    // Функции плеера
     function togglePlay() {
       if (videoElem.paused) {
         videoElem.play();
@@ -445,7 +549,6 @@
       volumeIcon.className = videoElem.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
     }
 
-    // Изменение скорости (0.5x, 1x, 1.25x, 1.5x, 2x)
     function cycleSpeed() {
       currentSpeedIndex = (currentSpeedIndex + 1) % speeds.length;
       const newSpeed = speeds[currentSpeedIndex];
