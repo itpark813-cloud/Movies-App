@@ -14,20 +14,25 @@
   <!-- Firebase SDK (v10) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // Конфигурация Firebase
+    // Ваша конфигурация Firebase
     const firebaseConfig = {
-      apiKey: "AIzaSyDummyKey_ReplaceWithYourFirebaseKey",
-      authDomain: "sevimlikino-app.firebaseapp.com",
-      projectId: "sevimlikino-app",
-      storageBucket: "sevimlikino-app.appspot.com",
-      messagingSenderId: "123456789",
-      appId: "1:123456789:web:abcdef123456"
+      apiKey: "AIzaSyCTcRlgSy_tQ_nxyk7Y8-DjiQ8RnjA-hYw",
+      authDomain: "sevimlikino.firebaseapp.com",
+      projectId: "sevimlikino",
+      storageBucket: "sevimlikino.firebasestorage.app",
+      messagingSenderId: "166243734025",
+      appId: "1:166243734025:web:6d258f207c8c58ab671ed8",
+      measurementId: "G-VPG39S6R4T"
     };
 
+    // Инициализация Firebase и сервисов
     const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+
     window.firebaseAuth = getAuth(app);
     window.firebaseDB = getFirestore(app);
     window.googleProvider = new GoogleAuthProvider();
@@ -822,7 +827,7 @@
       usersDb[email] = newUser;
       localStorage.setItem('sevimli_local_db', JSON.stringify(usersDb));
 
-      // Если подключен Firebase Firestore — сохраняем туда
+      // Сохранение в Firestore
       if (window.firebaseDB) {
         setDoc(doc(window.firebaseDB, "users", email), { login, email, password: pass }).catch(()=>{});
       }
@@ -835,7 +840,6 @@
       authErrorMsg.style.display = 'none';
 
       if (!window.firebaseAuth) {
-        // Запасной локальный симулятор если Firebase API ключ не заменен пользователем
         simulateGoogleAuth();
         return;
       }
@@ -850,7 +854,6 @@
     }
 
     function simulateGoogleAuth() {
-      // Имитация входа через Google
       const mockEmail = "google_user@gmail.com";
       const mockName = "GoogleUser";
       processGoogleUserData(mockEmail, mockName);
@@ -859,7 +862,6 @@
     async function processGoogleUserData(email, name) {
       tempGoogleUser = { email, login: name || email.split('@')[0] };
 
-      // Проверяем наличие аккаунта в базе
       let usersDb = JSON.parse(localStorage.getItem('sevimli_local_db') || '{}');
       let existingUser = usersDb[email];
 
@@ -876,12 +878,10 @@
       googlePasswordForm.classList.add('active');
 
       if (existingUser) {
-        // Аккаунт есть -> запрашиваем пароль
         isNewGoogleUser = false;
         document.getElementById('googleStepTitle').textContent = "Введите установленный пароль аккаунта";
         document.getElementById('googleConfirmGroup').style.display = 'none';
       } else {
-        // Аккаунт НЕ создан -> просим создать и подтвердить пароль
         isNewGoogleUser = true;
         document.getElementById('googleStepTitle').textContent = "Создайте пароль для завершения регистрации";
         document.getElementById('googleConfirmGroup').style.display = 'flex';
@@ -907,7 +907,6 @@
           return;
         }
 
-        // Только теперь создаем аккаунт!
         tempGoogleUser.password = pass;
         usersDb[tempGoogleUser.email] = tempGoogleUser;
         localStorage.setItem('sevimli_local_db', JSON.stringify(usersDb));
@@ -918,7 +917,6 @@
 
         setUserLoggedIn(tempGoogleUser);
       } else {
-        // Проверяем введенный пароль
         const existingUser = usersDb[tempGoogleUser.email];
         if (existingUser && existingUser.password === pass) {
           setUserLoggedIn(existingUser);
@@ -975,7 +973,6 @@
       watchRating.textContent = movie.rating || 'N/A';
       watchDesc.textContent = movie.desc || 'Описание отсутствует.';
 
-      // Настройка кнопки Трейлера в Google
       trailerBtn.href = `https://www.google.com/search?q=${encodeURIComponent('смотреть трейлер ' + movie.title)}`;
 
       stopVideo();
