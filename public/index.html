@@ -212,8 +212,8 @@
       videoModal.classList.add('active');
       document.body.style.overflow = 'hidden';
 
-      // Надежный плеер Kinoplayer, который сам агрегирует работающие потоки
-      const iframeUrl = `https://kinoplayer.top/player/?kp=${kpId}`;
+      // Плеер HDVB
+      const iframeUrl = `https://video.hdvb.cloud/embed/kp/${kpId}`;
       playerBox.innerHTML = `<iframe src="${iframeUrl}" allowfullscreen allow="autoplay" loading="lazy"></iframe>`;
     }
 
