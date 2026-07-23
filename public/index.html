@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SevimliKino — Онлайн Фильмы</title>
+  <title>SevimliKino — Свой Плеер</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -56,43 +56,56 @@
     .card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
 
     .modal {
-      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.92); backdrop-filter: blur(15px);
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(15px);
       z-index: 2000; display: flex; align-items: center; justify-content: center;
       opacity: 0; pointer-events: none; transition: opacity 0.3s ease; padding: 15px;
     }
     .modal.active { opacity: 1; pointer-events: auto; }
     .modal-container {
-      background: var(--bg-secondary); border-radius: var(--radius-lg); width: 100%; max-width: 600px;
-      overflow: hidden; border: 1px solid var(--border-color); position: relative; text-align: center;
-      padding: 40px 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+      background: var(--bg-secondary); border-radius: var(--radius-lg); width: 100%; max-width: 900px;
+      max-height: 95vh; overflow-y: auto; border: 1px solid var(--border-color); position: relative;
     }
     .modal-close {
-      position: absolute; top: 15px; right: 15px; background: rgba(255, 255, 255, 0.08); border: none;
+      position: absolute; top: 15px; right: 15px; background: rgba(0, 0, 0, 0.7); border: none;
       color: #fff; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 100; font-size: 1.2rem;
-      transition: background 0.2s;
     }
-    .modal-close:hover { background: rgba(255, 255, 255, 0.2); }
 
-    .modal-title-text { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; color: #fff; }
-    .modal-sub { font-size: 1rem; color: var(--text-muted); margin-bottom: 30px; }
-
-    .watch-btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 12px;
-      background: var(--accent); color: #fff; padding: 16px 36px; border-radius: 30px;
-      text-decoration: none; font-weight: 700; font-size: 1.1rem;
-      transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-      box-shadow: 0 6px 20px rgba(229, 9, 20, 0.4);
+    /* СВОЙ КАСТОМНЫЙ ПЛЕЕР */
+    .custom-player-wrapper {
+      position: relative; width: 100%; background: #000; border-radius: var(--radius-lg) var(--radius-lg) 0 0; overflow: hidden; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center;
     }
-    .watch-btn:hover { background: #f40612; transform: translateY(-3px); box-shadow: 0 8px 25px rgba(229, 9, 20, 0.6); }
+    .custom-player-wrapper video {
+      width: 100%; height: 100%; object-fit: contain; display: block; cursor: pointer;
+    }
+    .player-controls {
+      position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.85));
+      padding: 20px 20px 15px; display: flex; flex-direction: column; gap: 10px; opacity: 0; transition: opacity 0.3s ease;
+    }
+    .custom-player-wrapper:hover .player-controls { opacity: 1; }
+    
+    .progress-bar-container {
+      width: 100%; height: 6px; background: rgba(255,255,255,0.3); border-radius: 3px; cursor: pointer; position: relative;
+    }
+    .progress-bar {
+      height: 100%; background: var(--accent); width: 0%; border-radius: 3px; position: relative;
+    }
 
+    .controls-row { display: flex; align-items: center; justify-content: space-between; }
+    .controls-left, .controls-right { display: flex; align-items: center; gap: 15px; }
+    .ctrl-btn {
+      background: none; border: none; color: #fff; font-size: 1.1rem; cursor: pointer; transition: color 0.2s;
+    }
+    .ctrl-btn:hover { color: var(--accent); }
+    .time-display { font-size: 0.85rem; color: var(--text-muted); }
+
+    .modal-details { padding: 20px; }
+    .modal-title-text { font-size: 1.5rem; font-weight: 800; margin-bottom: 5px; }
     .empty-state { grid-column: 1 / -1; color: var(--text-muted); text-align: center; padding: 30px 0; }
 
     @media (max-width: 768px) {
       .header { flex-direction: column; align-items: stretch; }
       .container { padding-top: 140px; }
       .movies-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
-      .modal-container { padding: 30px 20px; }
-      .modal-title-text { font-size: 1.4rem; }
     }
   </style>
 </head>
@@ -122,11 +135,29 @@
         <i class="fa-solid fa-xmark"></i>
       </button>
 
-      <h2 class="modal-title-text" id="modalTitle">Название фильма</h2>
-      <p class="modal-sub" id="modalSub">2026 • Смотреть онлайн</p>
+      <!-- НАШ СОБСТВЕННЫЙ ПЛЕЕР -->
+      <div class="custom-player-wrapper" id="playerWrapper">
+        <video id="videoElement" src="" poster=""></video>
+        <div class="player-controls">
+          <div class="progress-bar-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+          </div>
+          <div class="controls-row">
+            <div class="controls-left">
+              <button class="ctrl-btn" id="playPauseBtn"><i class="fa-solid fa-play" id="playIcon"></i></button>
+              <button class="ctrl-btn" id="muteBtn"><i class="fa-solid fa-volume-high" id="volumeIcon"></i></button>
+              <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
+            </div>
+            <div class="controls-right">
+              <button class="ctrl-btn" id="fullscreenBtn"><i class="fa-solid fa-expand"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <div id="playerAction">
-        <!-- Кнопка динамически генерирует ссылку на поиск Filmix -->
+      <div class="modal-details">
+        <h2 class="modal-title-text" id="modalTitle">Название фильма</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem;" id="modalSub">Смотреть онлайн</p>
       </div>
     </div>
   </div>
@@ -144,7 +175,18 @@
     const modalCloseBtn = document.getElementById('modalCloseBtn');
     const modalTitle = document.getElementById('modalTitle');
     const modalSub = document.getElementById('modalSub');
-    const playerAction = document.getElementById('playerAction');
+
+    // Элементы своего плеера
+    const videoElem = document.getElementById('videoElement');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const playIcon = document.getElementById('playIcon');
+    const progressBar = document.getElementById('progressBar');
+    const progressContainer = document.getElementById('progressContainer');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const muteBtn = document.getElementById('muteBtn');
+    const volumeIcon = document.getElementById('volumeIcon');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const playerWrapper = document.getElementById('playerWrapper');
 
     document.addEventListener('DOMContentLoaded', () => {
       loadPopularMovies();
@@ -159,6 +201,15 @@
       modalCloseBtn.addEventListener('click', closeModal);
       videoModal.addEventListener('click', (e) => { if (e.target === videoModal) closeModal(); });
       document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+      // Логика кастомного плеера
+      playPauseBtn.addEventListener('click', togglePlay);
+      videoElem.addEventListener('click', togglePlay);
+      videoElem.addEventListener('timeupdate', updateProgress);
+      videoElem.addEventListener('loadedmetadata', updateTimeFormat);
+      progressContainer.addEventListener('click', setProgress);
+      muteBtn.addEventListener('click', toggleMute);
+      fullscreenBtn.addEventListener('click', toggleFullscreen);
     });
 
     async function loadPopularMovies() {
@@ -209,31 +260,77 @@
             <div class="card-sub">${escapeHtml(String(year))}</div>
           </div>
         `;
-        card.addEventListener('click', () => openPlayer(title, year));
+        // Здесь можно подставлять прямую ссылку на .mp4 или тестовое видео
+        const sampleVideoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+        card.addEventListener('click', () => openPlayer(title, year, sampleVideoUrl, poster));
         moviesGrid.appendChild(card);
       });
     }
 
-    function openPlayer(title, year) {
+    function openPlayer(title, year, videoUrl, posterUrl) {
       modalTitle.textContent = title;
-      modalSub.textContent = `${year || ''} • HD2 Плеер`;
+      modalSub.textContent = `${year || ''} • Свой плеер`;
+      videoElem.src = videoUrl;
+      videoElem.poster = posterUrl;
       videoModal.classList.add('active');
       document.body.style.overflow = 'hidden';
-
-      // Ссылка на поиск фильма на Filmix для запуска рабочего плеера
-      const filmixSearchUrl = `https://filmix.pub/index.php?do=search&subaction=search&story=` + encodeURIComponent(title);
-      
-      playerAction.innerHTML = `
-        <a href="${filmixSearchUrl}" target="_blank" class="watch-btn">
-          <i class="fa-solid fa-play"></i> Смотреть на Filmix
-        </a>
-      `;
     }
 
     function closeModal() {
       videoModal.classList.remove('active');
-      playerAction.innerHTML = '';
+      videoElem.pause();
+      videoElem.src = '';
       document.body.style.overflow = 'auto';
+    }
+
+    // Функции плеера
+    function togglePlay() {
+      if (videoElem.paused) {
+        videoElem.play();
+        playIcon.className = 'fa-solid fa-pause';
+      } else {
+        videoElem.pause();
+        playIcon.className = 'fa-solid fa-play';
+      }
+    }
+
+    function updateProgress() {
+      const percent = (videoElem.currentTime / videoElem.duration) * 100;
+      progressBar.style.width = percent + '%';
+      updateTimeFormat();
+    }
+
+    function setProgress(e) {
+      const width = this.clientWidth;
+      const clickX = e.offsetX;
+      const duration = videoElem.duration;
+      videoElem.currentTime = (clickX / width) * duration;
+    }
+
+    function updateTimeFormat() {
+      const currentMinutes = Math.floor(videoElem.currentTime / 60);
+      const currentSeconds = Math.floor(videoElem.currentTime % 60);
+      const durationMinutes = Math.floor(videoElem.duration / 60) || 0;
+      const durationSeconds = Math.floor(videoElem.duration % 60) || 0;
+      
+      const curFormatted = `${currentMinutes}:${currentSeconds < 10 ? '0' : ''}${currentSeconds}`;
+      const durFormatted = `${durationMinutes}:${durationSeconds < 10 ? '0' : ''}${durationSeconds}`;
+      timeDisplay.textContent = `${curFormatted} / ${durFormatted}`;
+    }
+
+    function toggleMute() {
+      videoElem.muted = !videoElem.muted;
+      volumeIcon.className = videoElem.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        playerWrapper.requestFullscreen().catch(err => {
+          alert(`Ошибка полноэкранного режима: ${err.message}`);
+        });
+      } else {
+        document.exitFullscreen();
+      }
     }
 
     function escapeHtml(text) {
