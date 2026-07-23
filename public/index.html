@@ -966,7 +966,7 @@
 
       trailerBtn.href = `https://www.google.com/search?q=${encodeURIComponent('смотреть трейлер ' + movie.title)}`;
 
-      stopVideo();
+            stopVideo();
 
       if (movie.isFullMovie) {
         isFullMoviePlaying = true;
@@ -976,7 +976,13 @@
 
         videoElem.style.display = 'block';
         customControls.style.display = 'flex';
-        videoElem.src = movie.videoUrl;
+
+        videoElem.pause();
+        videoElem.removeAttribute('src');
+        videoElem.load();
+
+        videoElem.src = movie.videoUrl || '';
+        videoElem.preload = 'auto';
         videoElem.load();
 
         let savedTime = 0;
@@ -987,17 +993,30 @@
           }
         } catch (err) {}
 
+        const startPlayback = async () => {
+          try {
+            await videoElem.play();
+            playIcon.className = 'fa-solid fa-pause';
+          } catch (err) {
+            playIcon.className = 'fa-solid fa-play';
+          }
+        };
+
+        videoElem.onerror = () => {
+          showToast('Ошибка загрузки видео');
+        };
+
         if (savedTime > 15) {
           pendingResumeTime = savedTime;
           resumeTimeText.textContent = formatTime(savedTime);
           resumeModal.style.display = 'flex';
         } else {
           resumeModal.style.display = 'none';
-          videoElem.play().then(() => {
-            playIcon.className = 'fa-solid fa-pause';
-          }).catch(() => {
-            playIcon.className = 'fa-solid fa-play';
-          });
+          if (videoElem.readyState >= 3) {
+            startPlayback();
+          } else {
+            videoElem.addEventListener('canplay', startPlayback, { once: true });
+          }
         }
       } else {
         isFullMoviePlaying = false;
