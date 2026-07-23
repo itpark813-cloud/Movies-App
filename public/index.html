@@ -157,12 +157,12 @@
           </div>
           <div class="hero-info">
             <span class="hero-badge">Полный фильм</span>
-            <h2 class="hero-title" id="spidermanTitle">Загрузка...</h2>
+            <h2 class="hero-title" id="spidermanTitle">Ищем фильм...</h2>
             <div class="hero-meta">
               <span id="spidermanYear">—</span>
               <span><i class="fa-solid fa-star" style="color: #e5a93c"></i> <span id="spidermanRating">—</span></span>
             </div>
-            <p class="hero-desc" id="spidermanDesc">Загрузка описания из Кинопоиска...</p>
+            <p class="hero-desc" id="spidermanDesc">Загружаем информацию о фильме Новый Человек-паук...</p>
             <button class="btn-watch"><i class="fa-solid fa-play"></i> Смотреть сейчас</button>
           </div>
         </div>
@@ -234,7 +234,7 @@
     const API_FILM_URL = 'https://kinopoiskapiunofficial.tech/api/v2.2/films/';
     const API_SEARCH_URL = 'https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword=';
 
-    // Элементы страницы
+    // Элементы
     const homePage = document.getElementById('homePage');
     const watchPage = document.getElementById('watchPage');
     const featuredSection = document.getElementById('featuredSection');
@@ -246,7 +246,7 @@
     const logoBtn = document.getElementById('logoBtn');
     const backBtn = document.getElementById('backBtn');
 
-    // Элементы Человека-паука на главной
+    // Главная карточка
     const spidermanImg = document.getElementById('spidermanImg');
     const spidermanTitle = document.getElementById('spidermanTitle');
     const spidermanYear = document.getElementById('spidermanYear');
@@ -271,31 +271,29 @@
     const speedBtn = document.getElementById('speedBtn');
     const fullscreenBtn = document.getElementById('fullscreenBtn');
 
-    // Детали фильма
+    // Детали на странице просмотра
     const watchTitle = document.getElementById('watchTitle');
     const watchYear = document.getElementById('watchYear');
     const watchRating = document.getElementById('watchRating');
     const watchType = document.getElementById('watchType');
     const watchDesc = document.getElementById('watchDesc');
 
-    // Главный фильм (Человек-паук)
+    // Данные нашего главного фильма (с твоей прямой ссылкой)
     let spidermanData = {
       title: "Новый Человек-паук",
       year: "2012",
       rating: "6.9",
       desc: "",
-      // Твоя прямая ссылка на видеофайл .mp4
-      videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+      videoUrl: "https://github.com/itpark813-cloud/Movies-App/releases/download/v1.0/spiderman-2012.mp4"
     };
 
     const speeds = [0.5, 1.0, 1.25, 1.5, 2.0];
     let currentSpeedIndex = 1;
 
     document.addEventListener('DOMContentLoaded', () => {
-      // 1. Загружаем данные Человека-паука из API (ID 6039)
+      // Автопоиск данных про фильм через API Kinopoisk
       loadSpidermanFromApi();
 
-      // 2. Клик по карточке Человека-паука
       document.getElementById('mainMovieCard').addEventListener('click', () => {
         openWatchPage({
           title: spidermanData.title,
@@ -307,7 +305,6 @@
         });
       });
 
-      // Поиск
       searchForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const query = searchInput.value.trim();
@@ -317,7 +314,6 @@
       logoBtn.addEventListener('click', showHomePage);
       backBtn.addEventListener('click', showHomePage);
 
-      // Плеер
       playPauseBtn.addEventListener('click', togglePlay);
       videoElem.addEventListener('click', togglePlay);
       videoElem.addEventListener('timeupdate', updateProgress);
@@ -327,28 +323,34 @@
       fullscreenBtn.addEventListener('click', toggleFullscreen);
     });
 
-    // Получение данных Человека-паука из API
     async function loadSpidermanFromApi() {
       try {
-        const res = await fetch(API_FILM_URL + '6039', {
+        const res = await fetch(API_SEARCH_URL + encodeURIComponent('Новый Человек-паук'), {
           headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' }
         });
         const data = await res.json();
-        
-        spidermanData.title = data.nameRu || data.nameOriginal || "Новый Человек-паук";
-        spidermanData.year = data.year || "2012";
-        spidermanData.rating = data.ratingKinopoisk || data.rating || "6.9";
-        spidermanData.desc = data.description || "В детстве Питер Паркер был оставлен своими родителями...";
 
-        spidermanImg.src = data.posterUrl || data.posterUrlPreview;
-        spidermanTitle.textContent = spidermanData.title;
-        spidermanYear.textContent = spidermanData.year;
-        spidermanRating.textContent = spidermanData.rating;
-        spidermanDesc.textContent = spidermanData.desc;
+        if (data.films && data.films.length > 0) {
+          const film = data.films[0];
+
+          spidermanData.title = film.nameRu || film.nameEn || "Новый Человек-паук";
+          spidermanData.year = film.year || "2012";
+          spidermanData.rating = film.rating || "6.9";
+
+          spidermanImg.src = film.posterUrl || film.posterUrlPreview;
+          spidermanTitle.textContent = spidermanData.title;
+          spidermanYear.textContent = spidermanData.year;
+          spidermanRating.textContent = spidermanData.rating;
+
+          const detailRes = await fetch(API_FILM_URL + film.filmId, {
+            headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' }
+          });
+          const detailData = await detailRes.json();
+          spidermanData.desc = detailData.description || film.description || "Описание отсутствует.";
+          spidermanDesc.textContent = spidermanData.desc;
+        }
       } catch (err) {
-        console.error("Ошибка загрузки данных Человека-паука:", err);
-        spidermanTitle.textContent = "Новый Человек-паук";
-        spidermanDesc.textContent = "Не удалось загрузить описание из сети.";
+        console.error("Ошибка автопоиска Человека-паука:", err);
       }
     }
 
@@ -358,7 +360,6 @@
       stopVideo();
     }
 
-    // Открытие страницы просмотра
     async function openWatchPage(movie) {
       homePage.classList.remove('active');
       watchPage.classList.add('active');
@@ -372,7 +373,6 @@
       stopVideo();
 
       if (movie.isFullMovie) {
-        // Запуск твоего .mp4 видео
         watchType.textContent = "Полный фильм";
         watchType.style.color = "var(--accent)";
         
@@ -385,32 +385,27 @@
         videoElem.play();
         playIcon.className = 'fa-solid fa-pause';
       } else {
-        // Загрузка трейлера из Кинопоиска
         watchType.textContent = "Трейлер";
         watchType.style.color = "#e5a93c";
 
         videoElem.style.display = 'none';
         customControls.style.display = 'none';
         
-        // Получаем детальную информацию и трейлер через API
-        fetchTrailerForFilm(movie.filmId, movie.title);
+        fetchTrailerForFilm(movie.filmId);
       }
     }
 
-    // Загрузка реального трейлера через API Кинопоиска
-    async function fetchTrailerForFilm(filmId, fallbackTitle) {
+    async function fetchTrailerForFilm(filmId) {
       trailerIframe.style.display = 'none';
       noTrailerBox.style.display = 'none';
 
       try {
-        // 1. Подгружаем полное описание фильма, если его не было
         const detailRes = await fetch(API_FILM_URL + filmId, {
           headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' }
         });
         const detailData = await detailRes.json();
         if (detailData.description) watchDesc.textContent = detailData.description;
 
-        // 2. Запрашиваем списки видео к фильму
         const videoRes = await fetch(`${API_FILM_URL}${filmId}/videos`, {
           headers: { 'X-API-KEY': API_KEY, 'Content-Type': 'application/json' }
         });
@@ -418,7 +413,6 @@
 
         let youtubeUrl = null;
         if (videoData.items && videoData.items.length > 0) {
-          // Ищем ролик с YouTube
           const ytItem = videoData.items.find(v => v.site === 'YOUTUBE' || (v.url && v.url.includes('youtube')));
           if (ytItem) youtubeUrl = ytItem.url;
         }
@@ -432,11 +426,8 @@
           }
         }
 
-        // Если ролик не найден в базе
         showNoTrailer();
-
       } catch (err) {
-        console.error("Ошибка загрузки трейлера:", err);
         showNoTrailer();
       }
     }
@@ -446,7 +437,6 @@
       noTrailerBox.style.display = 'flex';
     }
 
-    // Извлечение ID видео из ссылок YouTube
     function extractYouTubeId(url) {
       if (!url) return null;
       const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -461,7 +451,6 @@
       noTrailerBox.style.display = 'none';
     }
 
-    // Поиск фильмов
     async function fetchSearch(query) {
       featuredSection.style.display = 'none';
       searchSection.style.display = 'block';
@@ -505,7 +494,7 @@
             title: movie.nameRu || movie.nameEn,
             year: movie.year,
             rating: movie.rating,
-            desc: movie.description || "Загрузка полного описания...",
+            desc: movie.description || "Загрузка полных данных...",
             isFullMovie: false
           });
         });
@@ -514,7 +503,6 @@
       });
     }
 
-    // Функции плеера
     function togglePlay() {
       if (videoElem.paused) {
         videoElem.play();
