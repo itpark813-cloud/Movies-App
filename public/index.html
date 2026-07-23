@@ -127,7 +127,7 @@
       <div class="modal-details">
         <div class="server-tabs" id="serverTabs">
           <button class="server-tab active" data-server="collaps">Сервер 1 (Collaps)</button>
-          <button class="server-tab" data-server="alloha">Сервер 2 (Alloha)</button>
+          <button class="server-tab" data-server="videocdn">Сервер 2 (VideoCDN)</button>
         </div>
         <h2 class="modal-title-text" id="modalTitle">Название фильма</h2>
         <p style="color: var(--text-muted); font-size: 0.9rem;" id="modalSub">Смотреть онлайн</p>
@@ -245,9 +245,11 @@
       let iframeUrl = '';
 
       if (serverName === 'collaps') {
-        iframeUrl = `https://api.bhcesh.me/embed/movie/${currentKpId}`;
-      } else if (serverName === 'alloha') {
-        iframeUrl = `https://allohatv.com/embed/kp/${currentKpId}`;
+        // Исправленный правильный путь для Collaps
+        iframeUrl = `https://api.bhcesh.me/embed/kp/${currentKpId}`;
+      } else if (serverName === 'videocdn') {
+        // Резервный сервер VideoCDN
+        iframeUrl = `https://78.svetacdn.in/jB5l/movie?kinopoisk_id=${currentKpId}`;
       }
 
       playerBox.innerHTML = `<iframe src="${iframeUrl}" allowfullscreen allow="autoplay" loading="lazy"></iframe>`;
